@@ -1,19 +1,18 @@
 import { StatusBar } from 'expo-status-bar';
-import { ScrollView, StyleSheet } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import MomentSection from './src/components/MomentSection';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <GestureHandlerRootView style={styles.root}>
+      <View style={styles.root}>
           <StatusBar style="light" />
           <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
             <MomentSection />
           </ScrollView>
-      </GestureHandlerRootView>
+      </View>
     </SafeAreaProvider>
   );
 }
