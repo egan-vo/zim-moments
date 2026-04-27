@@ -4,7 +4,7 @@ import { COLORS } from '../../constants/colors';
 import { CARD_ASPECT } from '../../constants/layout';
 
 export const styles = StyleSheet.create({
-  tiltContainer: {
+  cardContainer: {
     width: '100%',
   },
   pressable: {

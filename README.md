@@ -6,7 +6,6 @@
 - Toan bo animation dang dung `Animated` cua React Native (`import { Animated } from 'react-native'`).
 - Coverflow carousel duoc noi suy tu `scrollX`:
   - `scale`: active card lon hon, inactive card nho hon.
-  - `rotateY`: tao depth khi swipe.
   - `opacity`: card xa giam do ro.
 - Progress bar dung `scaleX` + `translateX` trong wrapper `overflow: hidden` (khong animate `width`).
 - Lift on press, overlay reveal, mute button tap feedback deu dung `Animated.timing/spring/sequence`.
@@ -22,9 +21,9 @@
 
 ### UX va interaction
 - Swipe ngang de doi card.
-- Co nut `Prev` / `Next` ben duoi carousel.
+- Co nut `Prev` / `Next`; landscape hien thi hai ben carousel.
 - Co nut mute/unmute tren card.
-- Safe Area da duoc ap dung o app shell.
+- Portrait/landscape duoc ho tro qua Expo orientation default.
 
 ### Accessibility
 - Story card co `accessible`, `accessibilityRole="button"`, label/hint ro nghia.

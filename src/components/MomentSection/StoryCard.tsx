@@ -12,7 +12,6 @@ import {
 
 import { type Story, type VideoPlayerRef, type VideoState } from '../../data/types';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
-import { useTilt } from '../../hooks/useTilt';
 import { CAROUSEL_DRAG_START_EVENT } from '../../hooks/useCarousel';
 
 import LazyImage from '../common/LazyImage';
@@ -44,8 +43,6 @@ function StoryCard({ story, isActive, distanceFromActive }: StoryCardProps) {
   const muteVisibility = useRef(new Animated.Value(0)).current;
   const isPressed = useRef(new Animated.Value(0)).current;
   const captionExpandProgress = useRef(new Animated.Value(0)).current;
-
-  const { tiltStyle, panHandlers } = useTilt({ isActiveCard: isActive });
 
   const transitionTo = useCallback(async (nextState: VideoState) => {
     await videoRef.current?.transitionTo(nextState);
@@ -161,7 +158,7 @@ function StoryCard({ story, isActive, distanceFromActive }: StoryCardProps) {
   const scale = isPressed.interpolate({ inputRange: [0, 1], outputRange: [1, 1.02] });
 
   return (
-    <Animated.View style={[styles.tiltContainer, tiltStyle]} {...panHandlers}>
+    <Animated.View style={styles.cardContainer}>
       <Pressable
         accessible
         accessibilityRole="button"

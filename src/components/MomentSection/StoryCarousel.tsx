@@ -2,7 +2,7 @@ import { memo, useCallback, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, type ListRenderItemInfo, type ViewToken } from 'react-native';
 
 import { COLORS } from '../../constants/colors';
-import { SIDE_CARD_OPACITY, SIDE_CARD_ROTATE_Y, SIDE_CARD_SCALE, VISIBILITY_THRESHOLD } from '../../constants/layout';
+import { SIDE_CARD_OPACITY, SIDE_CARD_SCALE, VISIBILITY_THRESHOLD } from '../../constants/layout';
 import { type Story } from '../../data/types';
 import { useCarousel } from '../../hooks/useCarousel';
 
@@ -44,12 +44,6 @@ const CarouselItem = memo(function CarouselItem({
     extrapolate: 'clamp',
   });
 
-  const rotateY = scrollX.interpolate({
-    inputRange,
-    outputRange: [`${SIDE_CARD_ROTATE_Y[2]}deg`, `${SIDE_CARD_ROTATE_Y[1]}deg`, `${SIDE_CARD_ROTATE_Y[0]}deg`],
-    extrapolate: 'clamp',
-  });
-
   const opacity = scrollX.interpolate({
     inputRange,
     outputRange: [SIDE_CARD_OPACITY[2], SIDE_CARD_OPACITY[0], SIDE_CARD_OPACITY[2]],
@@ -64,7 +58,7 @@ const CarouselItem = memo(function CarouselItem({
           {
             width: cardWidth,
             opacity,
-            transform: [{ perspective: 900 }, { scale }, { rotateY }],
+            transform: [{ scale }],
           },
         ]}
       >
