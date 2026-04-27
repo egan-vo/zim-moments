@@ -20,7 +20,7 @@ export const stories: Story[] = [
     thumbnailUrl:
       'https://social-media.zim.vn/stories/f0ef85a2-2079-4437-b31d-9c9dc72a0a9a/a2ph8m-IMG_6538/a2ph8m-IMG_6538.jpg',
     videoUrl:
-      'https://social-media.zim.vn/stories/24315262-558e-4061-b5c2-e04ad3eb5054/uOEls0-copy_D49D602F-3189-4964-9342-BDE401E50159/output/hls/uOEls0-copy_D49D602F-3189-4964-9342-BDE401E501591080p.m3u8',
+      'https://social-media.zim.vn/stories/24531828-01e8-443b-87cd-76fadaf979e3/EE-Z7Q-copy_F2256802-9D85-49F4-8234-2FE8DB33E4D3/output/hls/EE-Z7Q-copy_F2256802-9D85-49F4-8234-2FE8DB33E4D31080p.m3u8',
     ctaUrl: 'm.me/108664042169789?ref=ZIM550547',
   },
   {

@@ -26,9 +26,10 @@ type StoryCardProps = {
   story: Story;
   isActive: boolean;
   distanceFromActive: number;
+  parallaxProgress: Animated.AnimatedInterpolation<number>;
 };
 
-function StoryCard({ story, isActive, distanceFromActive }: StoryCardProps) {
+function StoryCard({ story, isActive, distanceFromActive, parallaxProgress }: StoryCardProps) {
   const videoRef = useRef<VideoPlayerRef>(null);
   const ignoreVideoTapUntilRef = useRef(0);
   const ignorePauseUntilRef = useRef(0);
@@ -156,6 +157,11 @@ function StoryCard({ story, isActive, distanceFromActive }: StoryCardProps) {
 
   const translateY = isPressed.interpolate({ inputRange: [0, 1], outputRange: [0, -6] });
   const scale = isPressed.interpolate({ inputRange: [0, 1], outputRange: [1, 1.02] });
+  const captionTranslateX = parallaxProgress.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: [-10, 0, 10],
+    extrapolate: 'clamp',
+  });
 
   return (
     <Animated.View style={styles.cardContainer}>
@@ -171,22 +177,24 @@ function StoryCard({ story, isActive, distanceFromActive }: StoryCardProps) {
         style={[styles.pressable, isFocused && styles.focusRing]}
       >
         <Animated.View style={[styles.card, { transform: [{ translateY }, { scale }] }]}> 
-          <LazyImage uri={story.thumbnailUrl} blurhash={story.blurhash} />
+          <View pointerEvents="none" style={styles.mediaLayer}>
+            <LazyImage uri={story.thumbnailUrl} blurhash={story.blurhash} />
 
-          <VideoPlayer
-            ref={videoRef}
-            story={story}
-            isActive={isActive}
-            distanceFromActive={distanceFromActive}
-            onStateChange={setVideoState}
-            onMutedChange={setIsMuted}
-            onProgress={(value) => {
-              progress.setValue(value);
-            }}
-            onVideoEnd={() => {
-              void transitionTo('playing');
-            }}
-          />
+            <VideoPlayer
+              ref={videoRef}
+              story={story}
+              isActive={isActive}
+              distanceFromActive={distanceFromActive}
+              onStateChange={setVideoState}
+              onMutedChange={setIsMuted}
+              onProgress={(value) => {
+                progress.setValue(value);
+              }}
+              onVideoEnd={() => {
+                void transitionTo('playing');
+              }}
+            />
+          </View>
 
           <ProgressBar progress={progress} />
 
@@ -214,6 +222,7 @@ function StoryCard({ story, isActive, distanceFromActive }: StoryCardProps) {
             story={story}
             isExpanded={isCaptionExpanded}
             expandProgress={captionExpandProgress}
+            parallaxTranslateX={captionTranslateX}
           />
         </Animated.View>
       </Pressable>

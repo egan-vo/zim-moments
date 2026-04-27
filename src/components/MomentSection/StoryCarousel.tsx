@@ -46,6 +46,12 @@ const CarouselItem = memo(function CarouselItem({
     extrapolate: 'clamp',
   });
 
+  const parallaxProgress = scrollX.interpolate({
+    inputRange: [(index - 1) * itemSize, index * itemSize, (index + 1) * itemSize],
+    outputRange: [-1, 0, 1],
+    extrapolate: 'clamp',
+  });
+
   return (
     <View style={[styles.itemContainer, { width: itemSize }]}>
       <Animated.View
@@ -58,7 +64,12 @@ const CarouselItem = memo(function CarouselItem({
           },
         ]}
       >
-        <StoryCard story={story} isActive={index === activeIndex} distanceFromActive={index - activeIndex} />
+        <StoryCard
+          story={story}
+          isActive={index === activeIndex}
+          distanceFromActive={index - activeIndex}
+          parallaxProgress={parallaxProgress}
+        />
       </Animated.View>
     </View>
   );

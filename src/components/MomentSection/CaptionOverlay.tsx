@@ -8,9 +8,10 @@ type CaptionOverlayProps = {
   story: Story;
   isExpanded: boolean;
   expandProgress: Animated.Value;
+  parallaxTranslateX: Animated.AnimatedInterpolation<number>;
 };
 
-function CaptionOverlay({ story, isExpanded, expandProgress }: CaptionOverlayProps) {
+function CaptionOverlay({ story, isExpanded, expandProgress, parallaxTranslateX }: CaptionOverlayProps) {
   const captionTranslateY = expandProgress.interpolate({
     inputRange: [0, 1],
     outputRange: [8, 0],
@@ -30,9 +31,19 @@ function CaptionOverlay({ story, isExpanded, expandProgress }: CaptionOverlayPro
   });
 
   return (
-    <Animated.View pointerEvents="none" style={[styles.container, { opacity: captionOpacity }]}>
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.container,
+        {
+          opacity: captionOpacity,
+          transform: [{ translateX: parallaxTranslateX }],
+        },
+      ]}
+    >
+      <View style={styles.backdrop} />
       <Animated.Text
-        numberOfLines={1}
+        numberOfLines={isExpanded ? undefined : 1}
         style={[styles.location, { transform: [{ translateY: captionTranslateY }] }]}
       >
         {story.location}
@@ -53,13 +64,20 @@ function CaptionOverlay({ story, isExpanded, expandProgress }: CaptionOverlayPro
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 0,
-    right: 0,
+    left: 10,
+    right: 10,
     bottom: 0,
     paddingHorizontal: 14,
     paddingBottom: 14,
     paddingTop: 12,
     gap: 4,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.34)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.12)',
   },
   location: {
     color: COLORS.TEXT_PRIMARY,

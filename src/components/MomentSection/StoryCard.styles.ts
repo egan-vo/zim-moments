@@ -28,6 +28,9 @@ export const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     elevation: 7,
   },
+  mediaLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
   interactionLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 10,
