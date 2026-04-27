@@ -32,19 +32,10 @@ A short-form story carousel built with Expo, React Native, and the native `Anima
 
 ### Video Lifecycle
 
-- The lifecycle hook supports these internal states:
-  - `idle`
-  - `preview`
-  - `active_ready`
-  - `playing`
-  - `paused`
-  - `backgrounded`
-  - `offscreen_suspended`
-- The current carousel runtime path uses `idle`, `preview`, `active_ready`, `playing`, `paused`, and `offscreen_suspended`.
-- `backgrounded` is implemented as a supported transition target, but this build does not currently wire an `AppState` listener that triggers it.
-- The active card auto-plays.
-- Non-active cards pause automatically.
-- Far offscreen cards release decoder/buffer resources through `offscreen_suspended`.
+- The video lifecycle uses `idle`, `preview`, `active_ready`, `playing`, `paused`, and `offscreen_suspended` during the carousel flow.
+- `backgrounded` is supported by the state machine for future AppState handling, but this build does not currently trigger it from an AppState listener.
+- The active card auto-plays, while non-active cards pause automatically.
+- Adjacent cards stay in preview, and far offscreen cards transition to `offscreen_suspended` to unload video resources.
 - `AudioOwnerManager` ensures only one card owns audio at a time.
 - When a video finishes, the carousel advances to the next story when available; the final story replays from the beginning.
 
