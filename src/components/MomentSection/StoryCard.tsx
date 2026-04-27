@@ -3,10 +3,8 @@ import {
   Animated,
   DeviceEventEmitter,
   LayoutAnimation,
-  Platform,
   Pressable,
   Text,
-  UIManager,
   View,
 } from 'react-native';
 
@@ -140,12 +138,6 @@ function StoryCard({ story, isActive, distanceFromActive, parallaxProgress }: St
       subscription.remove();
     };
   }, [transitionTo]);
-
-  useEffect(() => {
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-  }, []);
 
   useEffect(() => {
     Animated.timing(captionExpandProgress, {

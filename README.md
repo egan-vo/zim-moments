@@ -1,6 +1,6 @@
 # ZIM Moments
 
-A short-form story carousel built with Expo, React Native, and the native `Animated` API. The experience focuses on smooth swipe navigation, lightweight motion, clear video playback, and readable story captions.
+A short-form story carousel built with Expo, React Native, and the native `Animated` API. The experience focuses on smooth swipe navigation, lightweight transform-based motion, clear video playback, responsive portrait/landscape layouts, and readable Vietnamese story captions.
 
 ## Solution Overview
 
@@ -12,7 +12,15 @@ A short-form story carousel built with Expo, React Native, and the native `Anima
   - Side cards scale down and fade slightly.
 - Progress uses `scaleX` and `translateX` inside an `overflow: hidden` wrapper instead of animating `width`.
 - Card press lift, caption reveal, mute feedback, and caption parallax use transform/opacity-based animation.
-- Media is intentionally not scaled or shifted for parallax, so videos remain sharp and display in their original card frame.
+- Media is intentionally not shifted for parallax, so videos remain sharp and display in their original card frame.
+- 3D tilt was intentionally removed to keep the mobile experience calmer and reduce motion discomfort.
+
+### Why This Solution
+
+- Native `Animated` keeps the implementation aligned with the assignment constraints without adding a heavier motion dependency.
+- `useNativeDriver: true` moves supported animations off the JS thread for smoother carousel, press, progress, and overlay motion.
+- Transform/opacity animation is predictable across Expo Go, simulator, and native builds.
+- The component and hook split keeps video lifecycle, carousel metrics, and presentation logic easy to review and maintain.
 
 ### Caption And Overlay
 
@@ -24,7 +32,7 @@ A short-form story carousel built with Expo, React Native, and the native `Anima
 
 ### Video Lifecycle
 
-- Each card moves through these states:
+- The lifecycle hook supports these internal states:
   - `idle`
   - `preview`
   - `active_ready`
@@ -32,6 +40,8 @@ A short-form story carousel built with Expo, React Native, and the native `Anima
   - `paused`
   - `backgrounded`
   - `offscreen_suspended`
+- The current carousel runtime path uses `idle`, `preview`, `active_ready`, `playing`, `paused`, and `offscreen_suspended`.
+- `backgrounded` is implemented as a supported transition target, but this build does not currently wire an `AppState` listener that triggers it.
 - The active card auto-plays.
 - Non-active cards pause automatically.
 - Far offscreen cards release decoder/buffer resources through `offscreen_suspended`.
@@ -44,22 +54,56 @@ A short-form story carousel built with Expo, React Native, and the native `Anima
 - `Prev` and `Next` controls are available; in landscape they sit beside the carousel.
 - Mute/unmute is available per card with tap feedback.
 - Tapping the video toggles play/pause.
-- Tapping the caption expands or collapses the text.
-- Portrait and landscape layouts are supported.
+- Tapping the caption once reveals the full story context; tapping it again opens the story CTA link.
+- Portrait and landscape layouts are supported. In landscape, the header is reduced and navigation controls move beside the carousel.
 
 ### Accessibility
 
 - Story cards use `accessible`, `accessibilityRole="button"`, and descriptive labels/hints.
-- Focus rings are shown for keyboard or focus-based navigation.
+- Focus rings are shown for keyboard or focus-based navigation, and focus triggers the same lift motion as press/hover.
 - Reduced Motion is respected by shortening supported animation durations to `0` for core UI flows.
+- Video playback still works when Reduced Motion is enabled; reduced motion only shortens UI animation timing.
+
+### Performance And Assets
+
+- Core animations use `transform` and `opacity`, avoiding layout-heavy animated properties such as `top`, `left`, `width`, and `height`.
+- `Animated.event` connects carousel scroll position to native-driven animation values.
+- `FlatList` uses `windowSize`, `maxToRenderPerBatch`, and `removeClippedSubviews` to limit offscreen work.
+- Thumbnail loading uses `expo-image` with BlurHash placeholders.
+- Far offscreen video cards move to `offscreen_suspended` to release decoder/buffer resources.
+
+## Requirement Coverage
+
+Current status summary:
+
+- Implemented: Expo/React Native source code, swipe carousel, press/focus lift motion, transform/opacity animation, native `Animated` API, reduced motion support, video auto-play/replay, mute without pausing, single-audio ownership, portrait/landscape responsiveness, caption reveal with second-tap CTA navigation, and lazy image placeholders.
+- Reviewed: carousel performance paths use native-driven animation and bounded `FlatList` rendering; caption text is placed on a dedicated dark backdrop to target WCAG AA readability; keyboard/focus states are visible and motion-enabled.
+- Intentionally scoped out: 3D tilt, dynamic WebP/AVIF selection, and device-specific image resolution selection. These are useful production enhancements but add complexity beyond the core assignment.
+
+## Implementation Map
+
+- Main section: `src/components/MomentSection/MomentSection.tsx`
+- Carousel metrics and scrolling: `src/hooks/useCarousel.ts`
+- Story card interactions: `src/components/MomentSection/StoryCard.tsx`
+- Video state machine: `src/hooks/useVideoLifecycle.ts`
+- Audio ownership: `src/managers/AudioOwnerManager.ts`
+- Caption overlay: `src/components/MomentSection/CaptionOverlay.tsx`
+- Mute micro-interaction: `src/components/MomentSection/MuteButton.tsx`
+- Progress bar: `src/components/MomentSection/ProgressBar.tsx`
+- Lazy image placeholder: `src/components/common/LazyImage.tsx`
+- Story data: `src/data/stories.ts`
+- Orientation config: `app.json`
 
 ## Video Lifecycle State Machine
 
 ```text
 idle -> preview -> active_ready -> playing -> paused
-                      ^             |
-                      |             v
-offscreen_suspended <- backgrounded
+  |         ^              |            |
+  |         |              v            v
+  +----> playing      offscreen_suspended
+
+Supported but not currently AppState-wired:
+playing / paused -> backgrounded -> offscreen_suspended
 
 Main transitions:
 - Center card: -> playing
@@ -82,19 +126,37 @@ Main transitions:
 npm install
 ```
 
-### Start Development Server
+### Run With Expo Go And Scan QR
 
 ```bash
 npm run start
 ```
 
-### Run By Platform
+After Metro starts, a QR code appears in the terminal.
+
+- Install **Expo Go** on your phone.
+- Keep the phone and computer on the same Wi-Fi network.
+- On iPhone, open the Camera app and scan the QR code.
+- On Android, open Expo Go and tap **Scan QR code**.
+- If the app does not connect on the same network, press `t` in the terminal to switch Expo connection mode, or restart with:
+
+```bash
+npx expo start --tunnel
+```
+
+### Run On Simulator, Emulator, Or Web
 
 ```bash
 npm run ios
 npm run android
 npm run web
 ```
+
+Notes:
+
+- `npm run start` is the recommended path for Expo Go.
+- `npm run ios` and `npm run android` use `expo run:*` and are best for local native builds or simulator/emulator testing.
+- `npm run web` starts the Expo web target.
 
 ## Build Android APK With EAS
 
@@ -122,11 +184,10 @@ eas build:configure
 eas build -p android --profile preview
 ```
 
-## Demo Links
+## Submission Links
 
-- Demo video: `TODO_Add_Demo_Video_Link`
-- APK download: `TODO_Add_APK_Link`
-- Store/TestFlight: `TODO_Add_Store_Link`
+- Expo project: [zim-moments on Expo](https://expo.dev/accounts/thienvonam.dev/projects/zim-moments)
+- Android APK profile: `eas build -p android --profile preview`
 
 ## Stack
 
