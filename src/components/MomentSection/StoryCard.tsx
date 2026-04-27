@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   DeviceEventEmitter,
   LayoutAnimation,
@@ -25,9 +26,18 @@ type StoryCardProps = {
   isActive: boolean;
   distanceFromActive: number;
   parallaxProgress: Animated.AnimatedInterpolation<number>;
+  onInactivePress?: () => void;
+  onVideoEnd?: () => void;
 };
 
-function StoryCard({ story, isActive, distanceFromActive, parallaxProgress }: StoryCardProps) {
+function StoryCard({
+  story,
+  isActive,
+  distanceFromActive,
+  parallaxProgress,
+  onInactivePress,
+  onVideoEnd,
+}: StoryCardProps) {
   const videoRef = useRef<VideoPlayerRef>(null);
   const ignoreVideoTapUntilRef = useRef(0);
   const ignorePauseUntilRef = useRef(0);
@@ -35,6 +45,7 @@ function StoryCard({ story, isActive, distanceFromActive, parallaxProgress }: St
 
   const [videoState, setVideoState] = useState<VideoState>('idle');
   const [isMuted, setIsMuted] = useState(false);
+  const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
 
@@ -75,6 +86,12 @@ function StoryCard({ story, isActive, distanceFromActive, parallaxProgress }: St
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsCaptionExpanded((prev) => !prev);
   }, []);
+
+  const handleCardPress = useCallback(() => {
+    if (!isActive) {
+      onInactivePress?.();
+    }
+  }, [isActive, onInactivePress]);
 
   const handlePressIn = useCallback(() => {
     Animated.timing(isPressed, {
@@ -166,6 +183,7 @@ function StoryCard({ story, isActive, distanceFromActive, parallaxProgress }: St
         onBlur={() => setIsFocused(false)}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
+        onPress={handleCardPress}
         style={[styles.pressable, isFocused && styles.focusRing]}
       >
         <Animated.View style={[styles.card, { transform: [{ translateY }, { scale }] }]}> 
@@ -179,10 +197,16 @@ function StoryCard({ story, isActive, distanceFromActive, parallaxProgress }: St
               distanceFromActive={distanceFromActive}
               onStateChange={setVideoState}
               onMutedChange={setIsMuted}
+              onLoadingChange={setIsVideoLoading}
               onProgress={(value) => {
                 progress.setValue(value);
               }}
               onVideoEnd={() => {
+                if (onVideoEnd) {
+                  onVideoEnd();
+                  return;
+                }
+
                 void transitionTo('playing');
               }}
             />
@@ -190,7 +214,7 @@ function StoryCard({ story, isActive, distanceFromActive, parallaxProgress }: St
 
           <ProgressBar progress={progress} />
 
-          <View pointerEvents="box-none" style={styles.interactionLayer}>
+          <View pointerEvents={isActive ? 'box-none' : 'none'} style={styles.interactionLayer}>
             <Pressable onPress={handleVideoTap} style={styles.videoTapZone} />
             <Pressable onPress={handleCaptionTap} style={styles.captionTapZone} />
           </View>
@@ -202,7 +226,14 @@ function StoryCard({ story, isActive, distanceFromActive, parallaxProgress }: St
             visible={muteVisibility}
           />
 
-          {videoState !== 'playing' ? (
+          {isVideoLoading ? (
+            <View style={styles.loadingWrap} pointerEvents="none">
+              <ActivityIndicator color="#FFFFFF" />
+              <Text style={styles.loadingText}>Loading</Text>
+            </View>
+          ) : null}
+
+          {videoState !== 'playing' && !isVideoLoading ? (
             <View style={styles.playButtonWrap} pointerEvents="none">
               <View style={styles.playButton}>
                 <Text style={styles.playGlyph}>▶</Text>

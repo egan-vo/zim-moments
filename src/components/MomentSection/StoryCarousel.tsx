@@ -20,6 +20,8 @@ type CarouselItemProps = {
   activeIndex: number;
   story: Story;
   isLandscape: boolean;
+  onPress: () => void;
+  onVideoEnd?: () => void;
 };
 
 const CarouselItem = memo(function CarouselItem({
@@ -30,6 +32,8 @@ const CarouselItem = memo(function CarouselItem({
   activeIndex,
   story,
   isLandscape,
+  onPress,
+  onVideoEnd,
 }: CarouselItemProps) {
   const inputRange = [(index - 2) * itemSize, index * itemSize, (index + 2) * itemSize];
   const scaleOutput = isLandscape ? [0.58, 1, 0.58] : [SIDE_CARD_SCALE[2], SIDE_CARD_SCALE[0], SIDE_CARD_SCALE[2]];
@@ -69,6 +73,8 @@ const CarouselItem = memo(function CarouselItem({
           isActive={index === activeIndex}
           distanceFromActive={index - activeIndex}
           parallaxProgress={parallaxProgress}
+          onInactivePress={onPress}
+          onVideoEnd={onVideoEnd}
         />
       </Animated.View>
     </View>
@@ -102,9 +108,11 @@ export default function StoryCarousel({ stories }: StoryCarouselProps) {
         activeIndex={activeIndex}
         story={item}
         isLandscape={isLandscape}
+        onPress={() => scrollToIndex(index)}
+        onVideoEnd={index < stories.length - 1 ? () => scrollToIndex(index + 1) : undefined}
       />
     ),
-    [activeIndex, cardWidth, isLandscape, itemSize, scrollX],
+    [activeIndex, cardWidth, isLandscape, itemSize, scrollToIndex, scrollX, stories.length],
   );
 
   const keyExtractor = useCallback((item: Story) => item.id, []);
@@ -125,6 +133,7 @@ export default function StoryCarousel({ stories }: StoryCarouselProps) {
         bounces={false}
         showsHorizontalScrollIndicator={false}
         snapToInterval={itemSize}
+        disableIntervalMomentum
         decelerationRate="fast"
         onScroll={scrollHandler}
         onMomentumScrollEnd={onMomentumScrollEnd}

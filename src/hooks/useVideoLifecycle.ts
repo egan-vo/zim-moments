@@ -10,6 +10,7 @@ type UseVideoLifecycleOptions = {
   reducedMotion: boolean;
   onVideoEnd?: () => void;
   onProgress?: (value: number) => void;
+  onLoadingChange?: (isLoading: boolean) => void;
 };
 
 type UseVideoLifecycleResult = {
@@ -17,6 +18,7 @@ type UseVideoLifecycleResult = {
   transitionTo: (nextState: VideoState) => Promise<void>;
   getCurrentState: () => VideoState;
   isMuted: boolean;
+  isLoading: boolean;
   getIsMuted: () => boolean;
   setMuted: (v: boolean) => Promise<void>;
   progress: Animated.Value;
@@ -27,10 +29,13 @@ export function useVideoLifecycle(
   videoRef: RefObject<Video | null>,
   options: UseVideoLifecycleOptions,
 ): UseVideoLifecycleResult {
+  const { onLoadingChange, onProgress, onVideoEnd, reducedMotion } = options;
   const [state, setState] = useState<VideoState>('idle');
   const [isMuted, setIsMuted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const stateRef = useRef<VideoState>('idle');
+  const isLoadingRef = useRef(false);
   const isMutedRef = useRef(false);
   const ignorePauseStatusUntilRef = useRef(0);
   const isMountedRef = useRef(true);
@@ -49,6 +54,21 @@ export function useVideoLifecycle(
     }
   }, []);
 
+  const setLoadingSafe = useCallback(
+    (nextIsLoading: boolean) => {
+      if (isLoadingRef.current === nextIsLoading) {
+        return;
+      }
+
+      isLoadingRef.current = nextIsLoading;
+      if (isMountedRef.current) {
+        setIsLoading(nextIsLoading);
+        onLoadingChange?.(nextIsLoading);
+      }
+    },
+    [onLoadingChange],
+  );
+
   const resetProgress = useCallback(() => {
     progress.setValue(0);
   }, [progress]);
@@ -63,8 +83,9 @@ export function useVideoLifecycle(
     } finally {
       audioOwnerManager.release(storyId);
       resetProgress();
+      setLoadingSafe(false);
     }
-  }, [resetProgress, storyId, videoRef]);
+  }, [resetProgress, setLoadingSafe, storyId, videoRef]);
 
   const loadPreview = useCallback(async () => {
     if (!videoRef.current || !videoUri) {
@@ -73,6 +94,7 @@ export function useVideoLifecycle(
 
     const status = await videoRef.current.getStatusAsync();
     if (status.isLoaded) {
+      setLoadingSafe(false);
       await videoRef.current.setStatusAsync({
         shouldPlay: false,
         isMuted: isMutedRef.current,
@@ -82,24 +104,28 @@ export function useVideoLifecycle(
     }
 
     try {
+      setLoadingSafe(true);
       await videoRef.current.loadAsync(
         { uri: videoUri },
         { shouldPlay: false, isMuted: isMutedRef.current, progressUpdateIntervalMillis: 250 },
         false,
       );
+      setLoadingSafe(false);
     } catch (error) {
       const nextStatus = await videoRef.current.getStatusAsync();
       if (!nextStatus.isLoaded) {
+        setLoadingSafe(false);
         throw error;
       }
 
+      setLoadingSafe(false);
       await videoRef.current.setStatusAsync({
         shouldPlay: false,
         isMuted: isMutedRef.current,
         progressUpdateIntervalMillis: 250,
       });
     }
-  }, [videoRef, videoUri]);
+  }, [setLoadingSafe, videoRef, videoUri]);
 
   const runTransition = useCallback(
     async (nextState: VideoState) => {
@@ -127,13 +153,24 @@ export function useVideoLifecycle(
         return;
       }
 
+      if (currentState === 'offscreen_suspended' && nextState === 'active_ready') {
+        await loadPreview();
+        setStateSafe('active_ready');
+        return;
+      }
+
       if (currentState === 'preview' && nextState === 'active_ready') {
         setStateSafe('active_ready');
         return;
       }
 
-      if ((currentState === 'idle' || currentState === 'preview') && nextState === 'playing') {
-        if (currentState === 'idle') {
+      if (
+        (currentState === 'idle' ||
+          currentState === 'preview' ||
+          currentState === 'offscreen_suspended') &&
+        nextState === 'playing'
+      ) {
+        if (currentState === 'idle' || currentState === 'offscreen_suspended') {
           await loadPreview();
         }
 
@@ -142,6 +179,7 @@ export function useVideoLifecycle(
         });
 
         if (videoRef.current) {
+          setLoadingSafe(true);
           await videoRef.current.setIsMutedAsync(isMutedRef.current);
           await videoRef.current.playAsync();
         }
@@ -201,6 +239,7 @@ export function useVideoLifecycle(
         });
 
         if (videoRef.current) {
+          setLoadingSafe(true);
           await videoRef.current.setIsMutedAsync(isMutedRef.current);
           await videoRef.current.playAsync();
         }
@@ -215,6 +254,7 @@ export function useVideoLifecycle(
         });
 
         if (videoRef.current) {
+          setLoadingSafe(true);
           await videoRef.current.setIsMutedAsync(isMutedRef.current);
           await videoRef.current.playAsync();
         }
@@ -275,7 +315,7 @@ export function useVideoLifecycle(
         setStateSafe('paused');
       }
     },
-    [loadPreview, options.reducedMotion, setStateSafe, storyId, unloadAndRelease, videoRef],
+    [loadPreview, reducedMotion, setLoadingSafe, setStateSafe, storyId, unloadAndRelease, videoRef],
   );
 
   const transitionTo = useCallback(
@@ -292,8 +332,11 @@ export function useVideoLifecycle(
   const handlePlaybackStatusUpdate = useCallback(
     (status: AVPlaybackStatus) => {
       if (!status.isLoaded) {
+        setLoadingSafe(true);
         return;
       }
+
+      setLoadingSafe(status.isBuffering || (stateRef.current === 'playing' && !status.isPlaying));
 
       const durationMillis = status.durationMillis ?? 0;
       const nextProgress =
@@ -301,10 +344,10 @@ export function useVideoLifecycle(
 
       Animated.timing(progress, {
         toValue: nextProgress,
-        duration: options.reducedMotion ? 0 : 250,
+        duration: reducedMotion ? 0 : 250,
         useNativeDriver: true,
       }).start();
-      options.onProgress?.(nextProgress);
+      onProgress?.(nextProgress);
 
       if (
         stateRef.current === 'playing' &&
@@ -317,21 +360,13 @@ export function useVideoLifecycle(
       }
 
       if (status.didJustFinish) {
-        if (videoRef.current) {
-          void (async () => {
-            try {
-              await videoRef.current?.setPositionAsync(0);
-              await videoRef.current?.playAsync();
-              setStateSafe('playing');
-            } catch {
-              // Keep end-of-video callback resilient.
-            }
-          })();
-        }
-        options.onVideoEnd?.();
+        setLoadingSafe(false);
+        setStateSafe('paused');
+        void videoRef.current?.setPositionAsync(0);
+        onVideoEnd?.();
       }
     },
-    [options, progress, setStateSafe, videoRef],
+    [onProgress, onVideoEnd, progress, reducedMotion, setLoadingSafe, setStateSafe, videoRef],
   );
 
   const setMuted = useCallback(
@@ -394,6 +429,7 @@ export function useVideoLifecycle(
     transitionTo,
     getCurrentState,
     isMuted,
+    isLoading,
     getIsMuted,
     setMuted,
     progress,

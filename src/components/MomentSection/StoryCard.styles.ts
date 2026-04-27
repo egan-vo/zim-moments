@@ -50,6 +50,21 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 9,
   },
+  loadingWrap: {
+    position: 'absolute',
+    top: '40%',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    gap: 8,
+    zIndex: 9,
+  },
+  loadingText: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
   playButton: {
     width: 56,
     height: 56,

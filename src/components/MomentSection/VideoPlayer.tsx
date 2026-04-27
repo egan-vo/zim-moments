@@ -14,10 +14,20 @@ type VideoPlayerProps = {
   onStateChange?: (state: VideoState) => void;
   onProgress?: (value: number) => void;
   onMutedChange?: (muted: boolean) => void;
+  onLoadingChange?: (isLoading: boolean) => void;
 };
 
 const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(function VideoPlayer(
-  { story, isActive, distanceFromActive, onVideoEnd, onStateChange, onProgress, onMutedChange },
+  {
+    story,
+    isActive,
+    distanceFromActive,
+    onVideoEnd,
+    onStateChange,
+    onProgress,
+    onMutedChange,
+    onLoadingChange,
+  },
   ref,
 ) {
   const videoRef = useRef<Video | null>(null);
@@ -30,6 +40,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(function VideoP
       reducedMotion,
       onVideoEnd,
       onProgress,
+      onLoadingChange,
     },
   );
 
