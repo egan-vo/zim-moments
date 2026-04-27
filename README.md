@@ -46,7 +46,7 @@ A short-form story carousel built with Expo, React Native, and the native `Anima
 - Non-active cards pause automatically.
 - Far offscreen cards release decoder/buffer resources through `offscreen_suspended`.
 - `AudioOwnerManager` ensures only one card owns audio at a time.
-- Videos replay automatically when they finish.
+- When a video finishes, the carousel advances to the next story when available; the final story replays from the beginning.
 
 ### UX And Interaction
 
@@ -54,7 +54,7 @@ A short-form story carousel built with Expo, React Native, and the native `Anima
 - `Prev` and `Next` controls are available; in landscape they sit beside the carousel.
 - Mute/unmute is available per card with tap feedback.
 - Tapping the video toggles play/pause.
-- Tapping the caption once reveals the full story context; tapping it again opens the story CTA link.
+- Tapping the caption toggles the expanded story context.
 - Portrait and landscape layouts are supported. In landscape, the header is reduced and navigation controls move beside the carousel.
 
 ### Accessibility
@@ -76,7 +76,7 @@ A short-form story carousel built with Expo, React Native, and the native `Anima
 
 Current status summary:
 
-- Implemented: Expo/React Native source code, swipe carousel, press/focus lift motion, transform/opacity animation, native `Animated` API, reduced motion support, video auto-play/replay, mute without pausing, single-audio ownership, portrait/landscape responsiveness, caption reveal with second-tap CTA navigation, and lazy image placeholders.
+- Implemented: Expo/React Native source code, swipe carousel, press/focus lift motion, transform/opacity animation, native `Animated` API, reduced motion support, video auto-play/advance/replay-on-final-story, mute without pausing, single-audio ownership, portrait/landscape responsiveness, caption expand/collapse, and lazy image placeholders.
 - Reviewed: carousel performance paths use native-driven animation and bounded `FlatList` rendering; caption text is placed on a dedicated dark backdrop to target WCAG AA readability; keyboard/focus states are visible and motion-enabled.
 - Intentionally scoped out: 3D tilt, dynamic WebP/AVIF selection, and device-specific image resolution selection. These are useful production enhancements but add complexity beyond the core assignment.
 
@@ -109,7 +109,7 @@ Main transitions:
 - Center card: -> playing
 - Leave center: -> paused / preview / offscreen_suspended, depending on distance
 - Unmount: -> idle and clean up resources
-- didJustFinish: replay from the beginning
+- didJustFinish: advance to the next story, or replay from the beginning on the final story
 ```
 
 ## Installation
@@ -195,7 +195,6 @@ eas build -p android --profile preview
 - React Native 0.81
 - TypeScript
 - Native `Animated` API
-- react-native-gesture-handler
 - react-native-safe-area-context
 - expo-av
 - expo-image
