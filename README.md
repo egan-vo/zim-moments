@@ -1,36 +1,59 @@
-# ZIM Moments - Khoanh Khac Dang Nho
+# ZIM Moments
 
-## 1) Giai phap da chon
+A short-form story carousel built with Expo, React Native, and the native `Animated` API. The experience focuses on smooth swipe navigation, lightweight motion, clear video playback, and readable story captions.
 
-### Animation approach (Native Animated API)
-- Toan bo animation dang dung `Animated` cua React Native (`import { Animated } from 'react-native'`).
-- Coverflow carousel duoc noi suy tu `scrollX`:
-  - `scale`: active card lon hon, inactive card nho hon.
-  - `opacity`: card xa giam do ro.
-- Progress bar dung `scaleX` + `translateX` trong wrapper `overflow: hidden` (khong animate `width`).
-- Lift on press, overlay reveal, mute button tap feedback deu dung `Animated.timing/spring/sequence`.
+## Solution Overview
 
-### Video lifecycle approach
-- Moi card co 7 state:
-  - `idle`, `preview`, `active_ready`, `playing`, `paused`, `backgrounded`, `offscreen_suspended`.
-- Card active se auto play.
-- Card khong active se pause.
-- Cleanup decoder/buffer khi offscreen xa (`offscreen_suspended`).
-- Co `AudioOwnerManager` de dam bao chi 1 card giu audio owner tai 1 thoi diem.
-- Video auto replay khi chay het.
+### Animation Approach
 
-### UX va interaction
-- Swipe ngang de doi card.
-- Co nut `Prev` / `Next`; landscape hien thi hai ben carousel.
-- Co nut mute/unmute tren card.
-- Portrait/landscape duoc ho tro qua Expo orientation default.
+- Uses React Native's native `Animated` API via `import { Animated } from 'react-native'`.
+- The coverflow carousel is driven by `scrollX` interpolation:
+  - Active cards stay larger and clearer.
+  - Side cards scale down and fade slightly.
+- Progress uses `scaleX` and `translateX` inside an `overflow: hidden` wrapper instead of animating `width`.
+- Card press lift, caption reveal, mute feedback, and caption parallax use transform/opacity-based animation.
+- Media is intentionally not scaled or shifted for parallax, so videos remain sharp and display in their original card frame.
+
+### Caption And Overlay
+
+- Captions have a subtle scroll-driven parallax effect separate from the media layer.
+- A dark rounded caption backdrop improves readability without dimming the full video.
+- Location text is truncated to one line while collapsed.
+- When the caption is expanded, the full location and full caption are shown.
+- Story captions and locations are localized in Vietnamese.
+
+### Video Lifecycle
+
+- Each card moves through these states:
+  - `idle`
+  - `preview`
+  - `active_ready`
+  - `playing`
+  - `paused`
+  - `backgrounded`
+  - `offscreen_suspended`
+- The active card auto-plays.
+- Non-active cards pause automatically.
+- Far offscreen cards release decoder/buffer resources through `offscreen_suspended`.
+- `AudioOwnerManager` ensures only one card owns audio at a time.
+- Videos replay automatically when they finish.
+
+### UX And Interaction
+
+- Horizontal swipe navigation between stories.
+- `Prev` and `Next` controls are available; in landscape they sit beside the carousel.
+- Mute/unmute is available per card with tap feedback.
+- Tapping the video toggles play/pause.
+- Tapping the caption expands or collapses the text.
+- Portrait and landscape layouts are supported.
 
 ### Accessibility
-- Story card co `accessible`, `accessibilityRole="button"`, label/hint ro nghia.
-- Co focus ring khi focus.
-- Reduced Motion: skip autoplay transition phuc tap va giam duration animation ve 0 cho cac flow chinh.
 
-## 2) Video Lifecycle State Machine (ASCII)
+- Story cards use `accessible`, `accessibilityRole="button"`, and descriptive labels/hints.
+- Focus rings are shown for keyboard or focus-based navigation.
+- Reduced Motion is respected by shortening supported animation durations to `0` for core UI flows.
+
+## Video Lifecycle State Machine
 
 ```text
 idle -> preview -> active_ready -> playing -> paused
@@ -38,71 +61,79 @@ idle -> preview -> active_ready -> playing -> paused
                       |             v
 offscreen_suspended <- backgrounded
 
-Transitions chinh:
-- center card: -> playing
-- leave center: -> paused / preview / offscreen_suspended (tuy khoang cach)
-- unmount: -> idle (cleanup)
-- didJustFinish: replay tu dau
+Main transitions:
+- Center card: -> playing
+- Leave center: -> paused / preview / offscreen_suspended, depending on distance
+- Unmount: -> idle and clean up resources
+- didJustFinish: replay from the beginning
 ```
 
-## 3) Cai dat va chay
+## Installation
 
-### Yeu cau
-- Node.js LTS (khuyen nghi >= 18)
+### Requirements
+
+- Node.js LTS, recommended 18 or newer
 - npm
+- Expo Go for quick device testing, or a simulator/emulator for platform-specific testing
 
-### Cai dat
+### Install Dependencies
+
 ```bash
 npm install
 ```
 
-### Chay local
+### Start Development Server
+
 ```bash
 npm run start
 ```
 
-### Chay theo nen tang
+### Run By Platform
+
 ```bash
 npm run ios
 npm run android
 npm run web
 ```
 
-## 4) Build APK (EAS)
+## Build Android APK With EAS
 
-### Cai EAS CLI
+### Install EAS CLI
+
 ```bash
 npm install -g eas-cli
 ```
 
-### Dang nhap
+### Log In
+
 ```bash
 eas login
 ```
 
-### Cau hinh project (lan dau)
+### Configure The Project
+
 ```bash
 eas build:configure
 ```
 
 ### Build Android
+
 ```bash
 eas build -p android --profile preview
 ```
 
-## 5) Demo links
+## Demo Links
 
 - Demo video: `TODO_Add_Demo_Video_Link`
 - APK download: `TODO_Add_APK_Link`
 - Store/TestFlight: `TODO_Add_Store_Link`
 
----
-
 ## Stack
+
 - Expo SDK 54
 - React Native 0.81
 - TypeScript
-- Native `Animated` API (React Native)
+- Native `Animated` API
 - react-native-gesture-handler
 - react-native-safe-area-context
 - expo-av

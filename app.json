@@ -4,7 +4,7 @@
     "slug": "zim-moments",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./assets/icon.png",  
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -13,9 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.zim.moments",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.zim.moments",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -25,6 +27,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "38cafa60-af7c-41c3-b671-41c650efff5d"
+      }
+    },
+    "owner": "thienvonam.dev"
   }
 }
