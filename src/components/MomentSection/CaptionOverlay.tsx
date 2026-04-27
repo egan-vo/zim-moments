@@ -1,33 +1,51 @@
 import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import Animated, { type AnimatedStyle } from 'react-native-reanimated';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 
 import { COLORS } from '../../constants/colors';
 import { type Story } from '../../data/types';
 
 type CaptionOverlayProps = {
   story: Story;
-  overlayStyle: AnimatedStyle<object>;
-  captionStyle: AnimatedStyle<object>;
-  ctaStyle: AnimatedStyle<object>;
-  isRevealed: boolean;
+  isExpanded: boolean;
+  expandProgress: Animated.Value;
 };
 
-function CaptionOverlay({ story, overlayStyle, captionStyle, ctaStyle, isRevealed }: CaptionOverlayProps) {
+function CaptionOverlay({ story, isExpanded, expandProgress }: CaptionOverlayProps) {
+  const captionTranslateY = expandProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [8, 0],
+    extrapolate: 'clamp',
+  });
+
+  const captionOpacity = expandProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.88, 1],
+    extrapolate: 'clamp',
+  });
+
+  const helperOpacity = expandProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.75, 1],
+    extrapolate: 'clamp',
+  });
+
   return (
-    <Animated.View pointerEvents="none" style={[styles.container, overlayStyle]}>
-      <View style={styles.gradientStub} />
-      <Animated.View style={captionStyle}>
-        <Text style={styles.location}>{story.location}</Text>
-        <Text numberOfLines={2} style={styles.caption}>
-          {story.caption}
-        </Text>
-      </Animated.View>
-      {isRevealed && story.ctaUrl ? (
-        <Animated.View style={ctaStyle}>
-          <Text style={styles.cta}>Tap again to open</Text>
-        </Animated.View>
-      ) : null}
+    <Animated.View pointerEvents="none" style={[styles.container, { opacity: captionOpacity }]}>
+      <Animated.Text
+        numberOfLines={1}
+        style={[styles.location, { transform: [{ translateY: captionTranslateY }] }]}
+      >
+        {story.location}
+      </Animated.Text>
+      <Animated.Text
+        numberOfLines={isExpanded ? undefined : 2}
+        style={[styles.caption, { transform: [{ translateY: captionTranslateY }] }]}
+      >
+        {story.caption}
+      </Animated.Text>
+      <Animated.Text style={[styles.helper, { opacity: helperOpacity }]}>
+        {isExpanded ? 'Thu gọn' : 'Xem thêm'}
+      </Animated.Text>
     </Animated.View>
   );
 }
@@ -40,31 +58,30 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: 14,
     paddingBottom: 14,
-    paddingTop: 36,
-    gap: 8,
-  },
-  gradientStub: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: COLORS.OVERLAY_GRADIENT_END,
-    opacity: 0.8,
+    paddingTop: 12,
+    gap: 4,
   },
   location: {
     color: COLORS.TEXT_PRIMARY,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
-    marginBottom: 4,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   caption: {
     color: COLORS.TEXT_SECONDARY,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 16,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
-  cta: {
-    color: COLORS.ACCENT,
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
+  helper: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: 10,
+    fontWeight: '600',
+    opacity: 0.85,
   },
 });
 

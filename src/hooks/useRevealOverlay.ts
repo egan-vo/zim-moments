@@ -1,19 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import { Animated, Easing } from 'react-native';
 
-import {
-  OVERLAY_HIDE_DURATION,
-  OVERLAY_SHOW_DURATION,
-  SPRING_OVERLAY,
-  STAGGER_CAPTION,
-  STAGGER_CTA,
-} from '../constants/animation';
+import { OVERLAY_HIDE_DURATION, OVERLAY_SHOW_DURATION, STAGGER_CTA } from '../constants/animation';
 
 type UseRevealOverlayInput = {
   ctaUrl?: string;
@@ -27,9 +15,9 @@ export function useRevealOverlay({ ctaUrl, onNavigate, reducedMotion = false }: 
   const [isRevealed, setIsRevealed] = useState(false);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const overlayOpacity = useSharedValue(0);
-  const captionY = useSharedValue(14);
-  const ctaOpacity = useSharedValue(0);
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const captionY = useRef(new Animated.Value(14)).current;
+  const ctaOpacity = useRef(new Animated.Value(0)).current;
 
   const clearHideTimer = useCallback(() => {
     if (!hideTimerRef.current) {
@@ -47,16 +35,50 @@ export function useRevealOverlay({ ctaUrl, onNavigate, reducedMotion = false }: 
     const timingDuration = reducedMotion ? 0 : OVERLAY_SHOW_DURATION;
     const ctaDelay = reducedMotion ? 0 : STAGGER_CTA;
 
-    overlayOpacity.value = withTiming(1, { duration: timingDuration });
-    captionY.value = reducedMotion ? withTiming(0, { duration: 0 }) : withSpring(0, SPRING_OVERLAY);
-    ctaOpacity.value = withDelay(ctaDelay, withTiming(1, { duration: timingDuration }));
+    Animated.parallel([
+      Animated.timing(overlayOpacity, {
+        toValue: 1,
+        duration: timingDuration,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(captionY, {
+        toValue: 0,
+        duration: timingDuration,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.sequence([
+        Animated.delay(ctaDelay),
+        Animated.timing(ctaOpacity, {
+          toValue: 1,
+          duration: timingDuration,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
 
     hideTimerRef.current = setTimeout(() => {
       setIsRevealed(false);
       const hideDuration = reducedMotion ? 0 : OVERLAY_HIDE_DURATION;
-      overlayOpacity.value = withTiming(0, { duration: hideDuration });
-      captionY.value = withTiming(14, { duration: hideDuration });
-      ctaOpacity.value = withTiming(0, { duration: hideDuration });
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: hideDuration,
+          useNativeDriver: true,
+        }),
+        Animated.timing(captionY, {
+          toValue: 14,
+          duration: hideDuration,
+          useNativeDriver: true,
+        }),
+        Animated.timing(ctaOpacity, {
+          toValue: 0,
+          duration: hideDuration,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }, AUTO_HIDE_MS);
   }, [captionY, clearHideTimer, ctaOpacity, overlayOpacity, reducedMotion]);
 
@@ -64,9 +86,23 @@ export function useRevealOverlay({ ctaUrl, onNavigate, reducedMotion = false }: 
     clearHideTimer();
     setIsRevealed(false);
     const hideDuration = reducedMotion ? 0 : OVERLAY_HIDE_DURATION;
-    overlayOpacity.value = withTiming(0, { duration: hideDuration });
-    captionY.value = withTiming(14, { duration: hideDuration });
-    ctaOpacity.value = withTiming(0, { duration: hideDuration });
+    Animated.parallel([
+      Animated.timing(overlayOpacity, {
+        toValue: 0,
+        duration: hideDuration,
+        useNativeDriver: true,
+      }),
+      Animated.timing(captionY, {
+        toValue: 14,
+        duration: hideDuration,
+        useNativeDriver: true,
+      }),
+      Animated.timing(ctaOpacity, {
+        toValue: 0,
+        duration: hideDuration,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, [captionY, clearHideTimer, ctaOpacity, overlayOpacity, reducedMotion]);
 
   const handleTap = useCallback(() => {
@@ -87,19 +123,26 @@ export function useRevealOverlay({ ctaUrl, onNavigate, reducedMotion = false }: 
     };
   }, [clearHideTimer]);
 
-  const overlayStyle = useAnimatedStyle(() => ({
-    opacity: overlayOpacity.value,
-  }));
+  const overlayStyle = {
+    opacity: overlayOpacity,
+  };
 
-  const captionStyle = useAnimatedStyle(() => ({
-    opacity: overlayOpacity.value,
-    transform: [{ translateY: captionY.value }],
-  }));
+  const captionStyle = {
+    opacity: overlayOpacity,
+    transform: [{ translateY: captionY }],
+  };
 
-  const ctaStyle = useAnimatedStyle(() => ({
-    opacity: ctaOpacity.value,
-    transform: [{ translateY: captionY.value / 2 }],
-  }));
+  const ctaStyle = {
+    opacity: ctaOpacity,
+    transform: [
+      {
+        translateY: captionY.interpolate({
+          inputRange: [0, 14],
+          outputRange: [0, 7],
+        }),
+      },
+    ],
+  };
 
   return {
     overlayStyle,

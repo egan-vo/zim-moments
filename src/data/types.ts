@@ -21,6 +21,6 @@ export interface Story {
 export interface VideoPlayerRef {
   transitionTo: (state: VideoState) => Promise<void>;
   getCurrentState: () => VideoState;
-  setMuted: (muted: boolean) => void;
+  setMuted: (muted: boolean) => Promise<void>;
   getIsMuted: () => boolean;
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { Animated } from 'react-native';
 import { type AVPlaybackStatus, type Video } from 'expo-av';
-import { useSharedValue, withTiming } from 'react-native-reanimated';
 
 import audioOwnerManager from '../managers/AudioOwnerManager';
 import { stories } from '../data/stories';
@@ -15,9 +15,11 @@ type UseVideoLifecycleOptions = {
 type UseVideoLifecycleResult = {
   state: VideoState;
   transitionTo: (nextState: VideoState) => Promise<void>;
+  getCurrentState: () => VideoState;
   isMuted: boolean;
-  setMuted: (v: boolean) => void;
-  progress: ReturnType<typeof useSharedValue<number>>;
+  getIsMuted: () => boolean;
+  setMuted: (v: boolean) => Promise<void>;
+  progress: Animated.Value;
 };
 
 export function useVideoLifecycle(
@@ -29,11 +31,13 @@ export function useVideoLifecycle(
   const [isMuted, setIsMuted] = useState(false);
 
   const stateRef = useRef<VideoState>('idle');
+  const isMutedRef = useRef(false);
+  const ignorePauseStatusUntilRef = useRef(0);
   const isMountedRef = useRef(true);
   const transitionQueueRef = useRef<Promise<void>>(Promise.resolve());
   const transitionToRef = useRef<(nextState: VideoState) => Promise<void>>(async () => undefined);
 
-  const progress = useSharedValue(0);
+  const progress = useRef(new Animated.Value(0)).current;
 
   const story = useMemo(() => stories.find((item) => item.id === storyId), [storyId]);
   const videoUri = story?.videoUrl;
@@ -46,7 +50,7 @@ export function useVideoLifecycle(
   }, []);
 
   const resetProgress = useCallback(() => {
-    progress.value = 0;
+    progress.setValue(0);
   }, [progress]);
 
   const unloadAndRelease = useCallback(async () => {
@@ -67,11 +71,34 @@ export function useVideoLifecycle(
       return;
     }
 
-    await videoRef.current.loadAsync(
-      { uri: videoUri },
-      { shouldPlay: false, isMuted: true, progressUpdateIntervalMillis: 250 },
-      false,
-    );
+    const status = await videoRef.current.getStatusAsync();
+    if (status.isLoaded) {
+      await videoRef.current.setStatusAsync({
+        shouldPlay: false,
+        isMuted: isMutedRef.current,
+        progressUpdateIntervalMillis: 250,
+      });
+      return;
+    }
+
+    try {
+      await videoRef.current.loadAsync(
+        { uri: videoUri },
+        { shouldPlay: false, isMuted: isMutedRef.current, progressUpdateIntervalMillis: 250 },
+        false,
+      );
+    } catch (error) {
+      const nextStatus = await videoRef.current.getStatusAsync();
+      if (!nextStatus.isLoaded) {
+        throw error;
+      }
+
+      await videoRef.current.setStatusAsync({
+        shouldPlay: false,
+        isMuted: isMutedRef.current,
+        progressUpdateIntervalMillis: 250,
+      });
+    }
   }, [videoRef, videoUri]);
 
   const runTransition = useCallback(
@@ -120,11 +147,38 @@ export function useVideoLifecycle(
         });
 
         if (videoRef.current) {
-          await videoRef.current.setIsMutedAsync(isMuted);
+          await videoRef.current.setIsMutedAsync(isMutedRef.current);
           await videoRef.current.playAsync();
         }
 
         setStateSafe('playing');
+        return;
+      }
+
+      if (
+        nextState === 'offscreen_suspended' &&
+        (currentState === 'preview' ||
+          currentState === 'active_ready' ||
+          currentState === 'playing' ||
+          currentState === 'paused' ||
+          currentState === 'backgrounded')
+      ) {
+        if (videoRef.current) {
+          try {
+            await videoRef.current.pauseAsync();
+          } catch {
+            // Continue cleanup sequence.
+          }
+
+          try {
+            await videoRef.current.setPositionAsync(0);
+          } catch {
+            // Continue cleanup sequence.
+          }
+        }
+
+        await unloadAndRelease();
+        setStateSafe('offscreen_suspended');
         return;
       }
 
@@ -157,7 +211,7 @@ export function useVideoLifecycle(
         });
 
         if (videoRef.current) {
-          await videoRef.current.setIsMutedAsync(isMuted);
+          await videoRef.current.setIsMutedAsync(isMutedRef.current);
           await videoRef.current.playAsync();
         }
 
@@ -176,7 +230,7 @@ export function useVideoLifecycle(
         });
 
         if (videoRef.current) {
-          await videoRef.current.setIsMutedAsync(isMuted);
+          await videoRef.current.setIsMutedAsync(isMutedRef.current);
           await videoRef.current.playAsync();
         }
 
@@ -229,12 +283,6 @@ export function useVideoLifecycle(
         return;
       }
 
-      if (currentState === 'preview' && nextState === 'offscreen_suspended') {
-        await unloadAndRelease();
-        setStateSafe('offscreen_suspended');
-        return;
-      }
-
       if (nextState === 'paused') {
         if (videoRef.current) {
           await videoRef.current.pauseAsync();
@@ -242,7 +290,7 @@ export function useVideoLifecycle(
         setStateSafe('paused');
       }
     },
-    [isMuted, loadPreview, options.reducedMotion, setStateSafe, storyId, unloadAndRelease, videoRef],
+    [loadPreview, options.reducedMotion, setStateSafe, storyId, unloadAndRelease, videoRef],
   );
 
   const transitionTo = useCallback(
@@ -266,8 +314,22 @@ export function useVideoLifecycle(
       const nextProgress =
         durationMillis > 0 ? Math.min(1, status.positionMillis / durationMillis) : 0;
 
-      progress.value = withTiming(nextProgress, { duration: options.reducedMotion ? 0 : 250 });
+      Animated.timing(progress, {
+        toValue: nextProgress,
+        duration: options.reducedMotion ? 0 : 250,
+        useNativeDriver: true,
+      }).start();
       options.onProgress?.(nextProgress);
+
+      if (
+        stateRef.current === 'playing' &&
+        !status.isPlaying &&
+        !status.isBuffering &&
+        !status.didJustFinish &&
+        Date.now() >= ignorePauseStatusUntilRef.current
+      ) {
+        setStateSafe('paused');
+      }
 
       if (status.didJustFinish) {
         if (!options.reducedMotion && videoRef.current) {
@@ -288,14 +350,35 @@ export function useVideoLifecycle(
   );
 
   const setMuted = useCallback(
-    (value: boolean) => {
+    async (value: boolean) => {
+      const shouldResume = stateRef.current === 'playing';
+      ignorePauseStatusUntilRef.current = Date.now() + 700;
+      isMutedRef.current = value;
       setIsMuted(value);
+
       if (videoRef.current) {
-        void videoRef.current.setIsMutedAsync(value);
+        try {
+          await videoRef.current.setIsMutedAsync(value);
+
+          if (shouldResume) {
+            const status = await videoRef.current.getStatusAsync();
+            if (status.isLoaded && !status.isPlaying) {
+              await videoRef.current.playAsync();
+            }
+            setStateSafe('playing');
+          }
+        } finally {
+          setTimeout(() => {
+            ignorePauseStatusUntilRef.current = 0;
+          }, 700);
+        }
       }
     },
-    [videoRef],
+    [setStateSafe, videoRef],
   );
+
+  const getCurrentState = useCallback(() => stateRef.current, []);
+  const getIsMuted = useCallback(() => isMutedRef.current, []);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -324,7 +407,9 @@ export function useVideoLifecycle(
   return {
     state,
     transitionTo,
+    getCurrentState,
     isMuted,
+    getIsMuted,
     setMuted,
     progress,
   };

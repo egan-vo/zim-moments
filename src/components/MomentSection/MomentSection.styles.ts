@@ -5,10 +5,11 @@ import { COLORS } from '../../constants/colors';
 export const styles = StyleSheet.create({
   section: {
     backgroundColor: COLORS.BACKGROUND,
-    paddingTop: 24,
-    paddingBottom: 28,
-    gap: 16,
-    overflow: 'hidden',
+    paddingTop: 28,
+    paddingBottom: 36,
+    gap: 20,
+    overflow: 'visible',
+    justifyContent: 'center',
   },
   headerWrap: {
     paddingHorizontal: 16,

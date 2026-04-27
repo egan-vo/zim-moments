@@ -1,14 +1,8 @@
 import { memo, useCallback, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View, type ListRenderItemInfo, type ViewToken } from 'react-native';
-import Animated, {
-  Extrapolation,
-  interpolate,
-  useAnimatedStyle,
-  type SharedValue,
-} from 'react-native-reanimated';
+import { Animated, Pressable, StyleSheet, Text, View, type ListRenderItemInfo, type ViewToken } from 'react-native';
 
-import { SIDE_CARD_OPACITY, SIDE_CARD_ROTATE_Y, SIDE_CARD_SCALE, VISIBILITY_THRESHOLD } from '../../constants/layout';
 import { COLORS } from '../../constants/colors';
+import { SIDE_CARD_OPACITY, SIDE_CARD_ROTATE_Y, SIDE_CARD_SCALE, VISIBILITY_THRESHOLD } from '../../constants/layout';
 import { type Story } from '../../data/types';
 import { useCarousel } from '../../hooks/useCarousel';
 
@@ -23,7 +17,7 @@ type CarouselItemProps = {
   index: number;
   itemSize: number;
   cardWidth: number;
-  scrollX: SharedValue<number>;
+  scrollX: Animated.Value;
   activeIndex: number;
   story: Story;
 };
@@ -31,8 +25,6 @@ type CarouselItemProps = {
 const viewabilityConfig = {
   itemVisiblePercentThreshold: Math.round(VISIBILITY_THRESHOLD * 100),
 };
-
-const AnimatedFlatList = Animated.createAnimatedComponent(Animated.FlatList<Story>);
 
 const CarouselItem = memo(function CarouselItem({
   index,
@@ -42,45 +34,39 @@ const CarouselItem = memo(function CarouselItem({
   activeIndex,
   story,
 }: CarouselItemProps) {
-  const animatedCardStyle = useAnimatedStyle(() => {
-    const offset = (index * itemSize - scrollX.value) / itemSize;
-    const absOffset = Math.abs(offset);
+  const inputRange = [(index - 2) * itemSize, index * itemSize, (index + 2) * itemSize];
 
-    const scale = interpolate(
-      absOffset,
-      [0, 1, 2],
-      [...SIDE_CARD_SCALE],
-      Extrapolation.CLAMP,
-    );
+  const scale = scrollX.interpolate({
+    inputRange,
+    outputRange: [SIDE_CARD_SCALE[2], SIDE_CARD_SCALE[0], SIDE_CARD_SCALE[2]],
+    extrapolate: 'clamp',
+  });
 
-    const rotateY = interpolate(
-      offset,
-      [-2, 0, 2],
-      [...SIDE_CARD_ROTATE_Y],
-      Extrapolation.CLAMP,
-    );
+  const rotateY = scrollX.interpolate({
+    inputRange,
+    outputRange: [`${SIDE_CARD_ROTATE_Y[2]}deg`, `${SIDE_CARD_ROTATE_Y[1]}deg`, `${SIDE_CARD_ROTATE_Y[0]}deg`],
+    extrapolate: 'clamp',
+  });
 
-    const opacity = interpolate(
-      absOffset,
-      [0, 1.5, 2.5],
-      [...SIDE_CARD_OPACITY],
-      Extrapolation.CLAMP,
-    );
-
-    return {
-      opacity,
-      transform: [{ perspective: 900 }, { scale }, { rotateY: `${rotateY}deg` }],
-    };
-  }, [index, itemSize, scrollX]);
+  const opacity = scrollX.interpolate({
+    inputRange,
+    outputRange: [SIDE_CARD_OPACITY[2], SIDE_CARD_OPACITY[0], SIDE_CARD_OPACITY[2]],
+    extrapolate: 'clamp',
+  });
 
   return (
-    <View style={[styles.itemContainer, { width: itemSize }]}>
-      <Animated.View style={[styles.cardWrapper, { width: cardWidth }, animatedCardStyle]}>
-        <StoryCard
-          story={story}
-          isActive={index === activeIndex}
-          distanceFromActive={index - activeIndex}
-        />
+    <View style={[styles.itemContainer, { width: itemSize }]}> 
+      <Animated.View
+        style={[
+          styles.cardWrapper,
+          {
+            width: cardWidth,
+            opacity,
+            transform: [{ perspective: 900 }, { scale }, { rotateY }],
+          },
+        ]}
+      >
+        <StoryCard story={story} isActive={index === activeIndex} distanceFromActive={index - activeIndex} />
       </Animated.View>
     </View>
   );
@@ -105,12 +91,9 @@ export default function StoryCarousel({ stories, onActiveChange }: StoryCarousel
 
   const viewableItemsRef = useRef<ViewToken[]>([]);
 
-  const onViewableItemsChanged = useCallback(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      viewableItemsRef.current = viewableItems;
-    },
-    [],
-  );
+  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    viewableItemsRef.current = viewableItems;
+  }, []);
 
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<Story>) => (
@@ -134,7 +117,7 @@ export default function StoryCarousel({ stories, onActiveChange }: StoryCarousel
 
   return (
     <View style={styles.container}>
-      <AnimatedFlatList
+      <Animated.FlatList
         ref={flatListRef as never}
         data={stories}
         keyExtractor={keyExtractor}
@@ -183,13 +166,16 @@ export default function StoryCarousel({ stories, onActiveChange }: StoryCarousel
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   contentContainer: {
-    paddingVertical: 4,
+    paddingVertical: 36,
   },
   itemContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 8,
   },
   cardWrapper: {
     alignItems: 'center',
@@ -197,6 +183,7 @@ const styles = StyleSheet.create({
   navRow: {
     marginTop: 12,
     marginHorizontal: 16,
+    width: '92%',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },

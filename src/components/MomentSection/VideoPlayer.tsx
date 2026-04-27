@@ -17,27 +17,31 @@ type VideoPlayerProps = {
 };
 
 const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(function VideoPlayer(
-  { story, distanceFromActive, onVideoEnd, onStateChange, onProgress, onMutedChange },
+  { story, isActive, distanceFromActive, onVideoEnd, onStateChange, onProgress, onMutedChange },
   ref,
 ) {
   const videoRef = useRef<Video | null>(null);
   const { reducedMotion } = useReducedMotion();
 
-  const { state, transitionTo, isMuted, setMuted } = useVideoLifecycle(story.id, videoRef, {
-    reducedMotion,
-    onVideoEnd,
-    onProgress,
-  });
+  const { state, transitionTo, getCurrentState, isMuted, getIsMuted, setMuted } = useVideoLifecycle(
+    story.id,
+    videoRef,
+    {
+      reducedMotion,
+      onVideoEnd,
+      onProgress,
+    },
+  );
 
   useImperativeHandle(
     ref,
     () => ({
       transitionTo,
-      getCurrentState: () => state,
+      getCurrentState,
       setMuted,
-      getIsMuted: () => isMuted,
+      getIsMuted,
     }),
-    [isMuted, setMuted, state, transitionTo],
+    [getCurrentState, getIsMuted, setMuted, transitionTo],
   );
 
   useEffect(() => {
@@ -64,7 +68,12 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(function VideoP
     onMutedChange?.(isMuted);
   }, [isMuted, onMutedChange]);
 
-  if (state === 'idle' || state === 'offscreen_suspended' || !story.videoUrl) {
+  const shouldKeepVideoMounted =
+    isActive ||
+    Math.abs(distanceFromActive) <= 1 ||
+    (state !== 'idle' && state !== 'offscreen_suspended');
+
+  if (!shouldKeepVideoMounted || !story.videoUrl) {
     return null;
   }
 

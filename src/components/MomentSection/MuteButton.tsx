@@ -1,13 +1,7 @@
-import { memo, useCallback } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withSpring,
-  withTiming,
-  type SharedValue,
-} from 'react-native-reanimated';
+import { memo, useCallback, useRef } from 'react';
+import { Animated, Pressable, StyleSheet, Text } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+
 
 import { COLORS } from '../../constants/colors';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
@@ -15,43 +9,44 @@ import { useReducedMotion } from '../../hooks/useReducedMotion';
 type MuteButtonProps = {
   isMuted: boolean;
   onToggle: () => void;
-  visible: SharedValue<number>;
+  visible: Animated.Value;
+  onInteract?: () => void;
 };
 
-function MuteButton({ isMuted, onToggle, visible }: MuteButtonProps) {
+function MuteButton({ isMuted, onToggle, visible, onInteract }: MuteButtonProps) {
   const { reducedMotion } = useReducedMotion();
-  const tapScale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: visible.value,
-    transform: [{ scale: tapScale.value }],
-  }));
+  const tapScale = useRef(new Animated.Value(1)).current;
 
   const handlePress = useCallback(() => {
-    tapScale.value = reducedMotion
-      ? withTiming(1, { duration: 0 })
-      : withSequence(withTiming(0.85, { duration: 80 }), withSpring(1));
+    if (reducedMotion) {
+      tapScale.setValue(1);
+    } else {
+      Animated.sequence([
+        Animated.timing(tapScale, { toValue: 0.85, duration: 80, useNativeDriver: true }),
+        Animated.spring(tapScale, { toValue: 1, useNativeDriver: true }),
+      ]).start();
+    }
     onToggle();
   }, [onToggle, reducedMotion, tapScale]);
 
   return (
-    <Animated.View pointerEvents="box-none" style={[styles.container, animatedStyle]}>
-      <Pressable onPress={handlePress} style={styles.button}>
-        <View style={styles.iconWrap}>
-          <View style={styles.speakerBody} />
-          <View style={styles.speakerCone} />
-          {isMuted ? (
-            <>
-              <View style={[styles.muteSlash, styles.muteSlashA]} />
-              <View style={[styles.muteSlash, styles.muteSlashB]} />
-            </>
-          ) : (
-            <>
-              <View style={[styles.soundWave, styles.waveNear]} />
-              <View style={[styles.soundWave, styles.waveFar]} />
-            </>
-          )}
-        </View>
+    <Animated.View
+      pointerEvents="box-none"
+      style={[styles.container, { opacity: visible, transform: [{ scale: tapScale }] }]}
+    >
+      <Pressable
+        onPress={(event) => {
+          event.stopPropagation();
+          onInteract?.();
+          handlePress();
+        }}
+        onPressIn={(event) => {
+          event.stopPropagation();
+          onInteract?.();
+        }}
+        style={styles.button}
+      >
+        {isMuted ? <Ionicons name="volume-mute" size={18} color={COLORS.TEXT_PRIMARY} /> : <Ionicons name="volume-high" size={18} color={COLORS.TEXT_PRIMARY} />}
       </Pressable>
     </Animated.View>
   );
@@ -62,7 +57,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
-    zIndex: 20,
+    zIndex: 30,
   },
   button: {
     width: 36,
@@ -72,69 +67,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.55)',
   },
-  iconWrap: {
-    width: 18,
-    height: 18,
-    position: 'relative',
-  },
-  speakerBody: {
-    position: 'absolute',
-    left: 1,
-    top: 6,
-    width: 5,
-    height: 6,
-    borderRadius: 1,
-    backgroundColor: COLORS.TEXT_PRIMARY,
-  },
-  speakerCone: {
-    position: 'absolute',
-    left: 5,
-    top: 4,
-    width: 0,
-    height: 0,
-    borderTopWidth: 5,
-    borderBottomWidth: 5,
-    borderLeftWidth: 7,
-    borderTopColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderLeftColor: COLORS.TEXT_PRIMARY,
-  },
-  muteSlash: {
-    position: 'absolute',
-    right: 0,
-    top: 4,
-    width: 8,
-    height: 2,
-    borderRadius: 2,
-    backgroundColor: COLORS.TEXT_PRIMARY,
-  },
-  muteSlashA: {
-    transform: [{ rotate: '45deg' }],
-  },
-  muteSlashB: {
-    transform: [{ rotate: '-45deg' }],
-  },
-  soundWave: {
-    position: 'absolute',
-    borderColor: COLORS.TEXT_PRIMARY,
-    borderLeftWidth: 0,
-    borderTopWidth: 1.8,
-    borderBottomWidth: 1.8,
-    borderRightWidth: 1.8,
-    borderTopRightRadius: 6,
-    borderBottomRightRadius: 6,
-  },
-  waveNear: {
-    right: 1,
-    top: 6,
-    width: 4,
-    height: 6,
-  },
-  waveFar: {
-    right: -1,
-    top: 4,
-    width: 6,
-    height: 10,
+  icon: {
+    color: COLORS.TEXT_PRIMARY,
+    fontSize: 16,
+    lineHeight: 18,
   },
 });
 

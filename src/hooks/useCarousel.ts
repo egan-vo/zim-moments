@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import { DeviceEventEmitter, Dimensions, type FlatList, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useSharedValue, type SharedValue } from 'react-native-reanimated';
+import {
+  Animated,
+  DeviceEventEmitter,
+  Dimensions,
+  type FlatList,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 
 import { CARD_WIDTH_RATIO, GAP, SETTLE_DELAY_MS } from '../constants/layout';
 
@@ -13,8 +19,8 @@ export type UseCarouselInput = {
 
 export type UseCarouselOutput = {
   activeIndex: number;
-  scrollX: SharedValue<number>;
-  scrollHandler: ReturnType<typeof useAnimatedScrollHandler>;
+  scrollX: Animated.Value;
+  scrollHandler: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onMomentumScrollEnd: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onScrollBeginDrag: () => void;
   flatListRef: RefObject<FlatList<unknown> | null>;
@@ -40,7 +46,7 @@ export function useCarousel({ totalItems, onActiveChange }: UseCarouselInput): U
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [metrics, setMetrics] = useState(getMetrics);
-  const scrollX = useSharedValue(0);
+  const scrollX = useRef(new Animated.Value(0)).current;
   const { itemSize, cardWidth, screenWidth } = metrics;
 
   useEffect(() => {
@@ -68,11 +74,13 @@ export function useCarousel({ totalItems, onActiveChange }: UseCarouselInput): U
     };
   }, [clearSettleTimer]);
 
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollX.value = event.contentOffset.x;
-    },
-  });
+  const scrollHandler = useMemo(
+    () =>
+      Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
+        useNativeDriver: true,
+      }),
+    [scrollX],
+  );
 
   const onMomentumScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -107,8 +115,13 @@ export function useCarousel({ totalItems, onActiveChange }: UseCarouselInput): U
 
       const clampedIndex = Math.max(0, Math.min(totalItems - 1, index));
       flatListRef.current.scrollToOffset({ offset: clampedIndex * itemSize, animated: true });
+      setActiveIndex(clampedIndex);
+      clearSettleTimer();
+      settleTimerRef.current = setTimeout(() => {
+        onActiveChange(clampedIndex);
+      }, SETTLE_DELAY_MS);
     },
-    [itemSize, totalItems],
+    [clearSettleTimer, itemSize, onActiveChange, totalItems],
   );
 
   useEffect(() => {
@@ -117,36 +130,16 @@ export function useCarousel({ totalItems, onActiveChange }: UseCarouselInput): U
     }
   }, [activeIndex, totalItems]);
 
-  useEffect(() => {
-    const maxOffset = Math.max(0, totalItems - 1) * itemSize;
-    if (scrollX.value > maxOffset) {
-      scrollX.value = maxOffset;
-    }
-  }, [itemSize, scrollX, totalItems]);
-
-  return useMemo(
-    () => ({
-      activeIndex,
-      scrollX,
-      scrollHandler,
-      onMomentumScrollEnd,
-      onScrollBeginDrag,
-      flatListRef,
-      scrollToIndex,
-      cardWidth,
-      itemSize,
-      screenWidth,
-    }),
-    [
-      activeIndex,
-      cardWidth,
-      itemSize,
-      onMomentumScrollEnd,
-      onScrollBeginDrag,
-      screenWidth,
-      scrollHandler,
-      scrollToIndex,
-      scrollX,
-    ],
-  );
+  return {
+    activeIndex,
+    scrollX,
+    scrollHandler,
+    onMomentumScrollEnd,
+    onScrollBeginDrag,
+    flatListRef,
+    scrollToIndex,
+    cardWidth,
+    itemSize,
+    screenWidth,
+  };
 }

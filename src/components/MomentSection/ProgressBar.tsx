@@ -1,12 +1,14 @@
 import { memo, useState } from 'react';
-import { LayoutChangeEvent, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
+import { Animated, type LayoutChangeEvent, StyleSheet, View } from 'react-native';
 
 import { COLORS } from '../../constants/colors';
 import { PROGRESS_BAR_HEIGHT } from '../../constants/layout';
 
+const PROGRESS_HORIZONTAL_INSET = 8;
+const PROGRESS_TOP_INSET = 1;
+
 type ProgressBarProps = {
-  progress: SharedValue<number>;
+  progress: Animated.Value;
 };
 
 function ProgressBar({ progress }: ProgressBarProps) {
@@ -16,19 +18,22 @@ function ProgressBar({ progress }: ProgressBarProps) {
     setTrackWidth(event.nativeEvent.layout.width);
   };
 
-  const fillStyle = useAnimatedStyle(() => {
-    const p = Math.max(0, Math.min(1, progress.value));
-    return {
-      transform: [
-        { translateX: ((p - 1) * trackWidth) / 2 },
-        { scaleX: p },
-      ],
-    };
-  }, [trackWidth]);
+  const translateX = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-trackWidth / 2, 0],
+    extrapolate: 'clamp',
+  });
 
   return (
     <View style={styles.track} onLayout={handleTrackLayout}>
-      <Animated.View style={[styles.fill, fillStyle]} />
+      <Animated.View
+        style={[
+          styles.fill,
+          {
+            transform: [{ translateX }, { scaleX: progress }],
+          },
+        ]}
+      />
     </View>
   );
 }
@@ -36,12 +41,13 @@ function ProgressBar({ progress }: ProgressBarProps) {
 const styles = StyleSheet.create({
   track: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+    top: PROGRESS_TOP_INSET,
+    left: PROGRESS_HORIZONTAL_INSET,
+    right: PROGRESS_HORIZONTAL_INSET,
     height: PROGRESS_BAR_HEIGHT,
     backgroundColor: COLORS.PROGRESS_TRACK,
     overflow: 'hidden',
+    borderRadius: PROGRESS_BAR_HEIGHT / 2,
   },
   fill: {
     width: '100%',

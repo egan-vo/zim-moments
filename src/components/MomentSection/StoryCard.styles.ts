@@ -42,12 +42,13 @@ export const styles = StyleSheet.create({
   interactionLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 10,
+    paddingTop: 52,
   },
   videoTapZone: {
-    height: '70%',
+    flex: 7,
   },
   captionTapZone: {
-    height: '30%',
+    flex: 3,
   },
   playButtonWrap: {
     position: 'absolute',
