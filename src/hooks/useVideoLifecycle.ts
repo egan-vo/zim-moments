@@ -137,11 +137,6 @@ export function useVideoLifecycle(
           await loadPreview();
         }
 
-        if (options.reducedMotion) {
-          setStateSafe('active_ready');
-          return;
-        }
-
         audioOwnerManager.claim(storyId, () => {
           void transitionToRef.current('paused');
         });
@@ -201,11 +196,6 @@ export function useVideoLifecycle(
       }
 
       if (currentState === 'active_ready' && nextState === 'playing') {
-        if (options.reducedMotion) {
-          setStateSafe('active_ready');
-          return;
-        }
-
         audioOwnerManager.claim(storyId, () => {
           void transitionToRef.current('paused');
         });
@@ -220,11 +210,6 @@ export function useVideoLifecycle(
       }
 
       if (currentState === 'paused' && nextState === 'playing') {
-        if (options.reducedMotion) {
-          setStateSafe('active_ready');
-          return;
-        }
-
         audioOwnerManager.claim(storyId, () => {
           void transitionToRef.current('paused');
         });
@@ -332,7 +317,7 @@ export function useVideoLifecycle(
       }
 
       if (status.didJustFinish) {
-        if (!options.reducedMotion && videoRef.current) {
+        if (videoRef.current) {
           void (async () => {
             try {
               await videoRef.current?.setPositionAsync(0);
