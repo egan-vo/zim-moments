@@ -1,8 +1,8 @@
 import { useRef } from 'react';
-import { Animated, Dimensions, PanResponder } from 'react-native';
+import { Animated, PanResponder, useWindowDimensions } from 'react-native';
 
 import { MAX_TILT_Y } from '../constants/animation';
-import { CARD_WIDTH_RATIO } from '../constants/layout';
+import { CARD_ASPECT, CARD_WIDTH_RATIO } from '../constants/layout';
 
 type UseTiltInput = {
   isActiveCard: boolean;
@@ -15,8 +15,13 @@ function clamp(value: number, min: number, max: number) {
 export function useTilt({ isActiveCard }: UseTiltInput) {
   const tiltX = useRef(new Animated.Value(0)).current;
   const tiltY = useRef(new Animated.Value(0)).current;
+  const { width, height } = useWindowDimensions();
 
-  const cardWidth = Dimensions.get('window').width * CARD_WIDTH_RATIO;
+  const isLandscape = width > height;
+  const cardWidth = Math.min(
+    width * CARD_WIDTH_RATIO,
+    height * (isLandscape ? 0.78 : 0.82) * CARD_ASPECT,
+  );
 
   const resetTilt = () => {
     Animated.parallel([

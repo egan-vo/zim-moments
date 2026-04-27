@@ -1,18 +1,7 @@
-import { Dimensions, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-import { SPRING_LIFT } from '../../constants/animation';
 import { COLORS } from '../../constants/colors';
-import { CARD_ASPECT, CARD_WIDTH_RATIO } from '../../constants/layout';
-
-const CARD_WIDTH = Dimensions.get('window').width * CARD_WIDTH_RATIO;
-
-export const STORY_CARD_DIMENSIONS = {
-  CARD_WIDTH,
-};
-
-export const STORY_CARD_SPRINGS = {
-  LIFT: SPRING_LIFT,
-};
+import { CARD_ASPECT } from '../../constants/layout';
 
 export const styles = StyleSheet.create({
   tiltContainer: {

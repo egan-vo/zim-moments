@@ -2,17 +2,6 @@ import { Story } from './types';
 
 export const stories: Story[] = [
   {
-    id: 'zim-q10-video',
-    location: 'ZIM Academy - Q.10',
-    caption:
-      'Hoc vien tai ZIM truoc khi nghi le lam gi? Mot khoanh khac lop hoc nang luong, vui ve va gan voi tinh than hoc tap moi ngay.',
-    thumbnailUrl:
-      'https://social-media.zim.vn/stories/f0ef85a2-2079-4437-b31d-9c9dc72a0a9a/a2ph8m-IMG_6538/a2ph8m-IMG_6538.jpg',
-    videoUrl:
-      'https://social-media.zim.vn/stories/24315262-558e-4061-b5c2-e04ad3eb5054/uOEls0-copy_D49D602F-3189-4964-9342-BDE401E50159/output/hls/uOEls0-copy_D49D602F-3189-4964-9342-BDE401E501591080p.m3u8',
-    ctaUrl: 'm.me/108664042169789?ref=ZIM550547',
-  },
-  {
     id: 'zim-787-luy-ban-bich',
     location: 'ZIM Academy - 787 Luy Ban Bich - Tan Phu',
     caption:
@@ -22,6 +11,17 @@ export const stories: Story[] = [
 
     videoUrl: 'https://social-media.zim.vn/stories/cdeef794-113d-4235-8e29-96a5df8b5b02/EMWc28-copy_5E5D76E8-94EA-400B-BDD3-B3E2C0495A1B/output/hls/EMWc28-copy_5E5D76E8-94EA-400B-BDD3-B3E2C0495A1B1080p.m3u8',
     ctaUrl: 'm.me/288249894369519?ref=ZIM660290',
+  },
+  {
+    id: 'zim-q10-video',
+    location: 'ZIM Academy - Q.10',
+    caption:
+      'Hoc vien tai ZIM truoc khi nghi le lam gi? Mot khoanh khac lop hoc nang luong, vui ve va gan voi tinh than hoc tap moi ngay.',
+    thumbnailUrl:
+      'https://social-media.zim.vn/stories/f0ef85a2-2079-4437-b31d-9c9dc72a0a9a/a2ph8m-IMG_6538/a2ph8m-IMG_6538.jpg',
+    videoUrl:
+      'https://social-media.zim.vn/stories/24315262-558e-4061-b5c2-e04ad3eb5054/uOEls0-copy_D49D602F-3189-4964-9342-BDE401E50159/output/hls/uOEls0-copy_D49D602F-3189-4964-9342-BDE401E501591080p.m3u8',
+    ctaUrl: 'm.me/108664042169789?ref=ZIM550547',
   },
   {
     id: 'zim-hoang-dieu',

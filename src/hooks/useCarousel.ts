@@ -8,13 +8,12 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 
-import { CARD_WIDTH_RATIO, GAP, SETTLE_DELAY_MS } from '../constants/layout';
+import { CARD_ASPECT, CARD_WIDTH_RATIO, GAP } from '../constants/layout';
 
 export const CAROUSEL_DRAG_START_EVENT = 'carousel-drag-start';
 
 export type UseCarouselInput = {
   totalItems: number;
-  onActiveChange: (index: number) => void;
 };
 
 export type UseCarouselOutput = {
@@ -28,36 +27,51 @@ export type UseCarouselOutput = {
   cardWidth: number;
   itemSize: number;
   screenWidth: number;
+  isLandscape: boolean;
 };
 
 function getMetrics() {
-  const width = Dimensions.get('window').width;
-  const cardWidth = width * CARD_WIDTH_RATIO;
+  const { width, height } = Dimensions.get('window');
+  const isLandscape = width > height;
+  const widthBasedCardWidth = width * CARD_WIDTH_RATIO;
+  const heightBasedCardWidth = height * (isLandscape ? 0.78 : 0.82) * CARD_ASPECT;
+  const cardWidth = Math.min(widthBasedCardWidth, heightBasedCardWidth);
+
   return {
     screenWidth: width,
     cardWidth,
     itemSize: cardWidth + GAP,
+    isLandscape,
   };
 }
 
-export function useCarousel({ totalItems, onActiveChange }: UseCarouselInput): UseCarouselOutput {
+export function useCarousel({ totalItems }: UseCarouselInput): UseCarouselOutput {
   const flatListRef = useRef<FlatList<unknown> | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [metrics, setMetrics] = useState(getMetrics);
   const scrollX = useRef(new Animated.Value(0)).current;
-  const { itemSize, cardWidth, screenWidth } = metrics;
+  const activeIndexRef = useRef(0);
+  const { itemSize, cardWidth, screenWidth, isLandscape } = metrics;
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', () => {
-      setMetrics(getMetrics());
+      const nextMetrics = getMetrics();
+      const nextOffset = activeIndexRef.current * nextMetrics.itemSize;
+
+      setMetrics(nextMetrics);
+      scrollX.setValue(nextOffset);
+
+      requestAnimationFrame(() => {
+        flatListRef.current?.scrollToOffset({ offset: nextOffset, animated: false });
+      });
     });
 
     return () => {
       subscription.remove();
     };
-  }, []);
+  }, [scrollX]);
 
   const clearSettleTimer = useCallback(() => {
     if (!settleTimerRef.current) {
@@ -93,13 +107,11 @@ export function useCarousel({ totalItems, onActiveChange }: UseCarouselInput): U
       const rawIndex = event.nativeEvent.contentOffset.x / itemSize;
       const clampedIndex = Math.max(0, Math.min(totalItems - 1, Math.round(rawIndex)));
 
+      activeIndexRef.current = clampedIndex;
       setActiveIndex(clampedIndex);
 
-      settleTimerRef.current = setTimeout(() => {
-        onActiveChange(clampedIndex);
-      }, SETTLE_DELAY_MS);
     },
-    [clearSettleTimer, itemSize, onActiveChange, totalItems],
+    [clearSettleTimer, itemSize, totalItems],
   );
 
   const onScrollBeginDrag = useCallback(() => {
@@ -114,19 +126,20 @@ export function useCarousel({ totalItems, onActiveChange }: UseCarouselInput): U
       }
 
       const clampedIndex = Math.max(0, Math.min(totalItems - 1, index));
+      activeIndexRef.current = clampedIndex;
       flatListRef.current.scrollToOffset({ offset: clampedIndex * itemSize, animated: true });
       setActiveIndex(clampedIndex);
       clearSettleTimer();
-      settleTimerRef.current = setTimeout(() => {
-        onActiveChange(clampedIndex);
-      }, SETTLE_DELAY_MS);
+
     },
-    [clearSettleTimer, itemSize, onActiveChange, totalItems],
+    [clearSettleTimer, itemSize, totalItems],
   );
 
   useEffect(() => {
     if (activeIndex >= totalItems && totalItems > 0) {
-      setActiveIndex(totalItems - 1);
+      const nextIndex = totalItems - 1;
+      activeIndexRef.current = nextIndex;
+      setActiveIndex(nextIndex);
     }
   }, [activeIndex, totalItems]);
 
@@ -141,5 +154,6 @@ export function useCarousel({ totalItems, onActiveChange }: UseCarouselInput): U
     cardWidth,
     itemSize,
     screenWidth,
+    isLandscape,
   };
 }

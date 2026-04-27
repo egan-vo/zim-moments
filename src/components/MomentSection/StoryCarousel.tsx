@@ -10,7 +10,6 @@ import StoryCard from './StoryCard';
 
 type StoryCarouselProps = {
   stories: Story[];
-  onActiveChange: (index: number) => void;
 };
 
 type CarouselItemProps = {
@@ -20,6 +19,7 @@ type CarouselItemProps = {
   scrollX: Animated.Value;
   activeIndex: number;
   story: Story;
+  isLandscape: boolean;
 };
 
 const viewabilityConfig = {
@@ -33,12 +33,14 @@ const CarouselItem = memo(function CarouselItem({
   scrollX,
   activeIndex,
   story,
+  isLandscape,
 }: CarouselItemProps) {
   const inputRange = [(index - 2) * itemSize, index * itemSize, (index + 2) * itemSize];
+  const scaleOutput = isLandscape ? [0.58, 1, 0.58] : [SIDE_CARD_SCALE[2], SIDE_CARD_SCALE[0], SIDE_CARD_SCALE[2]];
 
   const scale = scrollX.interpolate({
     inputRange,
-    outputRange: [SIDE_CARD_SCALE[2], SIDE_CARD_SCALE[0], SIDE_CARD_SCALE[2]],
+    outputRange: scaleOutput,
     extrapolate: 'clamp',
   });
 
@@ -72,7 +74,7 @@ const CarouselItem = memo(function CarouselItem({
   );
 });
 
-export default function StoryCarousel({ stories, onActiveChange }: StoryCarouselProps) {
+export default function StoryCarousel({ stories }: StoryCarouselProps) {
   const {
     activeIndex,
     scrollX,
@@ -84,9 +86,9 @@ export default function StoryCarousel({ stories, onActiveChange }: StoryCarousel
     itemSize,
     cardWidth,
     screenWidth,
+    isLandscape,
   } = useCarousel({
     totalItems: stories.length,
-    onActiveChange,
   });
 
   const viewableItemsRef = useRef<ViewToken[]>([]);
@@ -104,14 +106,15 @@ export default function StoryCarousel({ stories, onActiveChange }: StoryCarousel
         scrollX={scrollX}
         activeIndex={activeIndex}
         story={item}
+        isLandscape={isLandscape}
       />
     ),
-    [activeIndex, cardWidth, itemSize, scrollX],
+    [activeIndex, cardWidth, isLandscape, itemSize, scrollX],
   );
 
   const keyExtractor = useCallback((item: Story) => item.id, []);
 
-  const sidePadding = Math.max(0, (screenWidth - cardWidth) / 2);
+  const sidePadding = Math.max(0, (screenWidth - itemSize) / 2);
   const canGoPrev = activeIndex > 0;
   const canGoNext = activeIndex < stories.length - 1;
 
@@ -119,6 +122,7 @@ export default function StoryCarousel({ stories, onActiveChange }: StoryCarousel
     <View style={styles.container}>
       <Animated.FlatList
         ref={flatListRef as never}
+        style={styles.list}
         data={stories}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
@@ -136,16 +140,24 @@ export default function StoryCarousel({ stories, onActiveChange }: StoryCarousel
         removeClippedSubviews
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
-        contentContainerStyle={[styles.contentContainer, { paddingHorizontal: sidePadding }]}
+        contentContainerStyle={[
+          styles.contentContainer,
+          isLandscape && styles.contentContainerLandscape,
+          { paddingHorizontal: sidePadding },
+        ]}
       />
 
-      <View pointerEvents="box-none" style={styles.navRow}>
+      <View pointerEvents="box-none" style={[styles.navRow, isLandscape && styles.navRowLandscape]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Previous card"
           disabled={!canGoPrev}
           onPress={() => scrollToIndex(activeIndex - 1)}
-          style={[styles.navButton, !canGoPrev && styles.navButtonDisabled]}
+          style={[
+            styles.navButton,
+            isLandscape && styles.navButtonLandscape,
+            !canGoPrev && styles.navButtonDisabled,
+          ]}
         >
           <Text style={styles.navText}>Prev</Text>
         </Pressable>
@@ -154,7 +166,11 @@ export default function StoryCarousel({ stories, onActiveChange }: StoryCarousel
           accessibilityLabel="Next card"
           disabled={!canGoNext}
           onPress={() => scrollToIndex(activeIndex + 1)}
-          style={[styles.navButton, !canGoNext && styles.navButtonDisabled]}
+          style={[
+            styles.navButton,
+            isLandscape && styles.navButtonLandscape,
+            !canGoNext && styles.navButtonDisabled,
+          ]}
         >
           <Text style={styles.navText}>Next</Text>
         </Pressable>
@@ -166,11 +182,20 @@ export default function StoryCarousel({ stories, onActiveChange }: StoryCarousel
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
+    width: '100%',
+    alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  list: {
+    width: '100%',
+    alignSelf: 'stretch',
+  },
   contentContainer: {
     paddingVertical: 36,
+  },
+  contentContainerLandscape: {
+    paddingVertical: 8,
   },
   itemContainer: {
     alignItems: 'center',
@@ -187,11 +212,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  navRowLandscape: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 34,
+    right: 34,
+    width: 'auto',
+    marginTop: 0,
+    marginHorizontal: 0,
+    alignItems: 'center',
+  },
   navButton: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
     backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  navButtonLandscape: {
+    minWidth: 54,
   },
   navButtonDisabled: {
     opacity: 0.35,
