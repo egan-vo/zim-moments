@@ -1,7 +1,6 @@
 import { memo, useCallback, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text } from 'react-native';
+import { Animated, Pressable, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-
 
 import { COLORS } from '../../constants/colors';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
@@ -46,7 +45,11 @@ function MuteButton({ isMuted, onToggle, visible, onInteract }: MuteButtonProps)
         }}
         style={styles.button}
       >
-        {isMuted ? <Ionicons name="volume-mute" size={18} color={COLORS.TEXT_PRIMARY} /> : <Ionicons name="volume-high" size={18} color={COLORS.TEXT_PRIMARY} />}
+        <Ionicons
+          name={isMuted ? 'volume-mute' : 'volume-high'}
+          size={18}
+          color={COLORS.TEXT_PRIMARY}
+        />
       </Pressable>
     </Animated.View>
   );
@@ -66,11 +69,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.55)',
-  },
-  icon: {
-    color: COLORS.TEXT_PRIMARY,
-    fontSize: 16,
-    lineHeight: 18,
   },
 });
 

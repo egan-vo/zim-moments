@@ -3,9 +3,9 @@ import { Story } from './types';
 export const stories: Story[] = [
   {
     id: 'zim-787-luy-ban-bich',
-    location: 'ZIM Academy - 787 Luy Ban Bich - Tan Phu',
+    location: 'ZIM Academy - 787 Lũy Bán Bích - Tân Phú',
     caption:
-      'IELTS WRITING se khong con la noi so khi ban co cho minh cuon bi kip nay. Tim hieu them thong tin tai day nhe.',
+      'IELTS Writing sẽ không còn là nỗi sợ khi bạn có cho mình cuốn bí kíp này. Tìm hiểu thêm thông tin tại đây nhé.',
     thumbnailUrl:
       'https://social-media.zim.vn/stories/05d1bfdb-15b4-42f2-b361-c722b1deae77/q_2krQ-thumbnail-2/q_2krQ-thumbnail-2.png',
 
@@ -14,9 +14,9 @@ export const stories: Story[] = [
   },
   {
     id: 'zim-q10-video',
-    location: 'ZIM Academy - Q.10',
+    location: 'ZIM Academy - Quận 10',
     caption:
-      'Hoc vien tai ZIM truoc khi nghi le lam gi? Mot khoanh khac lop hoc nang luong, vui ve va gan voi tinh than hoc tap moi ngay.',
+      'Học viên tại ZIM trước khi nghỉ lễ làm gì? Một khoảnh khắc lớp học năng lượng, vui vẻ và gắn với tinh thần học tập mỗi ngày.',
     thumbnailUrl:
       'https://social-media.zim.vn/stories/f0ef85a2-2079-4437-b31d-9c9dc72a0a9a/a2ph8m-IMG_6538/a2ph8m-IMG_6538.jpg',
     videoUrl:
@@ -25,9 +25,9 @@ export const stories: Story[] = [
   },
   {
     id: 'zim-hoang-dieu',
-    location: 'ZIM Academy - 148 Hoang Dieu 2 - Thu Duc',
+    location: 'ZIM Academy - 148 Hoàng Diệu 2 - Thủ Đức',
     caption:
-      'Hoc dung phuong phap giup ban hieu nhanh va nho lau hon. Moi buoi hoc deu dua ban gan hon voi muc tieu.',
+      'Học đúng phương pháp giúp bạn hiểu nhanh và nhớ lâu hơn. Mỗi buổi học đều đưa bạn gần hơn với mục tiêu.',
     thumbnailUrl:
       'https://social-media.zim.vn/stories/c128fe23-fb93-481c-b250-871477710984/odoq_v-IMG_1308/odoq_v-IMG_1308.jpeg',
     videoUrl: 'https://social-media.zim.vn/stories/d04c3a97-7d27-4cc9-9564-3c0c3bc11a6e/j7tCfj-copy_2009161B-A1D6-4A53-AA87-D8731FA80B89/output/hls/j7tCfj-copy_2009161B-A1D6-4A53-AA87-D8731FA80B891080p.m3u8',
@@ -35,9 +35,9 @@ export const stories: Story[] = [
   },
   {
     id: 'zim-nguyen-thi-thap',
-    location: 'ZIM Academy - 133 Nguyen Thi Thap - Quan 7',
+    location: 'ZIM Academy - 133 Nguyễn Thị Thập - Quận 7',
     caption:
-      'Ai cung co ly do rieng khi bat dau hanh trinh hoc tieng Anh. Cung xem ZIMIANS den day vi dieu gi nhe.',
+      'Ai cũng có lý do riêng khi bắt đầu hành trình học tiếng Anh. Cùng xem ZIMIANS đến đây vì điều gì nhé.',
     thumbnailUrl:
       'https://social-media.zim.vn/stories/6174e2f7-2f99-4e88-bed2-ac4c879388d9/uhXUey-z7763547723512_e4ebbee6c5cda7e1f08f92101d9b3a31/uhXUey-z7763547723512_e4ebbee6c5cda7e1f08f92101d9b3a31.jpg',
     videoUrl: 'https://social-media.zim.vn/stories/8f851f8c-1b88-4b9b-8f97-e621f38ab87b/Hq-dYx-copy_64B72D7F-CA88-45F2-96B4-8327E248CB5E/output/hls/Hq-dYx-copy_64B72D7F-CA88-45F2-96B4-8327E248CB5E1080p.m3u8',
@@ -45,9 +45,9 @@ export const stories: Story[] = [
   },
   {
     id: 'zim-go-vap',
-    location: 'ZIM Academy - Cityland Park Hills - Go Vap',
+    location: 'ZIM Academy - Cityland Park Hills - Gò Vấp',
     caption:
-      'Khi ca nhom cung chung chi huong nhung quen chua thong nhat kich ban. Cung hoc va tien bo moi ngay.',
+      'Khi cả nhóm cùng chung chí hướng nhưng quên chưa thống nhất kịch bản. Cùng học và tiến bộ mỗi ngày.',
     thumbnailUrl:
       'https://social-media.zim.vn/stories/11eddbef-ebdd-4255-97d3-517b61e7f2bb/5sVkxp-IMG_5242/5sVkxp-IMG_5242.jpeg',
     ctaUrl: 'm.me/109116555423560?ref=ZIM83094',
@@ -55,9 +55,9 @@ export const stories: Story[] = [
   },
   {
     id: 'zim-minh-khai',
-    location: 'ZIM Academy - 70 Minh Khai - Hai Ba Trung',
+    location: 'ZIM Academy - 70 Minh Khai - Hai Bà Trưng',
     caption:
-      'Dung de 3 thang he troi qua lim dim. Lo trinh ca nhan hoa va cam ket dau ra ro rang dang cho ban.',
+      'Đừng để 3 tháng hè trôi qua lặng lẽ. Lộ trình cá nhân hóa và cam kết đầu ra rõ ràng đang chờ bạn.',
     thumbnailUrl:
       'https://social-media.zim.vn/stories/53304e2d-7a92-44ed-81be-f0fcf0b54534/XvX3Bw-thumbnail-0/XvX3Bw-thumbnail-0.png',
     ctaUrl: 'm.me/100623326286137?ref=ZIM663209',
@@ -65,9 +65,9 @@ export const stories: Story[] = [
   },
   {
     id: 'zim-ha-dong',
-    location: 'ZIM Academy - 395 Quang Trung - Ha Dong',
+    location: 'ZIM Academy - 395 Quang Trung - Hà Đông',
     caption:
-      'Sat la chia khoa vao dai hoc top dau. Bat dau hanh trinh chinh phuc muc tieu cua ban ngay hom nay.',
+      'SAT là chìa khóa vào đại học top đầu. Bắt đầu hành trình chinh phục mục tiêu của bạn ngay hôm nay.',
     thumbnailUrl:
       'https://social-media.zim.vn/stories/c9f21982-04a7-4a69-9fdd-4fe9fb4013c3/ahflN_-z7760742757226_0e99cd95dca9c1f31a32a04cef546031/ahflN_-z7760742757226_0e99cd95dca9c1f31a32a04cef546031.jpg',
     ctaUrl: 'm.me/103458425997989?ref=ZIM617315',
@@ -75,9 +75,9 @@ export const stories: Story[] = [
   },
   {
     id: 'zim-long-bien',
-    location: 'ZIM Academy - 143 Hong Tien - Long Bien',
+    location: 'ZIM Academy - 143 Hồng Tiến - Long Biên',
     caption:
-      'Hoc dung cach, dung nguoi va dung lo trinh giup nguoi hoc bt pha trong thoi gian ngan.',
+      'Học đúng cách, đúng người và đúng lộ trình giúp người học bứt phá trong thời gian ngắn.',
     thumbnailUrl:
       'https://social-media.zim.vn/stories/0bdd85d1-0514-4afe-bbe6-b0ecc1ab0277/0gvOOp-thumbnail-0/0gvOOp-thumbnail-0.png',
     ctaUrl: 'm.me/115158751480316?ref=ZIM87039',
@@ -85,9 +85,9 @@ export const stories: Story[] = [
   },
   {
     id: 'zim-da-nang',
-    location: 'ZIM Academy - 243-245 Nguyen Van Linh - Da Nang',
+    location: 'ZIM Academy - 243-245 Nguyễn Văn Linh - Đà Nẵng',
     caption:
-      'Mot ngay hoc tap that chill nhung day nang luong. Co gang moi ngay de tuong lai dang tu hao hon.',
+      'Một ngày học tập thật chill nhưng đầy năng lượng. Cố gắng mỗi ngày để tương lai đáng tự hào hơn.',
     thumbnailUrl:
       'https://social-media.zim.vn/stories/30355ddc-475c-435c-9a44-04a34cbd851b/cpBtx9-IMG_7173/cpBtx9-IMG_7173.jpeg',
     ctaUrl: 'm.me/100177692999753?ref=ZIM614437',

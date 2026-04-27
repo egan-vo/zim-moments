@@ -47,7 +47,6 @@ function getMetrics() {
 
 export function useCarousel({ totalItems }: UseCarouselInput): UseCarouselOutput {
   const flatListRef = useRef<FlatList<unknown> | null>(null);
-  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [metrics, setMetrics] = useState(getMetrics);
@@ -73,21 +72,6 @@ export function useCarousel({ totalItems }: UseCarouselInput): UseCarouselOutput
     };
   }, [scrollX]);
 
-  const clearSettleTimer = useCallback(() => {
-    if (!settleTimerRef.current) {
-      return;
-    }
-
-    clearTimeout(settleTimerRef.current);
-    settleTimerRef.current = null;
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      clearSettleTimer();
-    };
-  }, [clearSettleTimer]);
-
   const scrollHandler = useMemo(
     () =>
       Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], {
@@ -98,8 +82,6 @@ export function useCarousel({ totalItems }: UseCarouselInput): UseCarouselOutput
 
   const onMomentumScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      clearSettleTimer();
-
       if (totalItems <= 0) {
         return;
       }
@@ -109,15 +91,13 @@ export function useCarousel({ totalItems }: UseCarouselInput): UseCarouselOutput
 
       activeIndexRef.current = clampedIndex;
       setActiveIndex(clampedIndex);
-
     },
-    [clearSettleTimer, itemSize, totalItems],
+    [itemSize, totalItems],
   );
 
   const onScrollBeginDrag = useCallback(() => {
-    clearSettleTimer();
     DeviceEventEmitter.emit(CAROUSEL_DRAG_START_EVENT);
-  }, [clearSettleTimer]);
+  }, []);
 
   const scrollToIndex = useCallback(
     (index: number) => {
@@ -129,10 +109,8 @@ export function useCarousel({ totalItems }: UseCarouselInput): UseCarouselOutput
       activeIndexRef.current = clampedIndex;
       flatListRef.current.scrollToOffset({ offset: clampedIndex * itemSize, animated: true });
       setActiveIndex(clampedIndex);
-      clearSettleTimer();
-
     },
-    [clearSettleTimer, itemSize, totalItems],
+    [itemSize, totalItems],
   );
 
   useEffect(() => {

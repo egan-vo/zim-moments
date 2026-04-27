@@ -1,8 +1,8 @@
-import { memo, useCallback, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View, type ListRenderItemInfo, type ViewToken } from 'react-native';
+import { memo, useCallback } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View, type ListRenderItemInfo } from 'react-native';
 
 import { COLORS } from '../../constants/colors';
-import { SIDE_CARD_OPACITY, SIDE_CARD_SCALE, VISIBILITY_THRESHOLD } from '../../constants/layout';
+import { SIDE_CARD_OPACITY, SIDE_CARD_SCALE } from '../../constants/layout';
 import { type Story } from '../../data/types';
 import { useCarousel } from '../../hooks/useCarousel';
 
@@ -20,10 +20,6 @@ type CarouselItemProps = {
   activeIndex: number;
   story: Story;
   isLandscape: boolean;
-};
-
-const viewabilityConfig = {
-  itemVisiblePercentThreshold: Math.round(VISIBILITY_THRESHOLD * 100),
 };
 
 const CarouselItem = memo(function CarouselItem({
@@ -51,7 +47,7 @@ const CarouselItem = memo(function CarouselItem({
   });
 
   return (
-    <View style={[styles.itemContainer, { width: itemSize }]}> 
+    <View style={[styles.itemContainer, { width: itemSize }]}>
       <Animated.View
         style={[
           styles.cardWrapper,
@@ -84,12 +80,6 @@ export default function StoryCarousel({ stories }: StoryCarouselProps) {
   } = useCarousel({
     totalItems: stories.length,
   });
-
-  const viewableItemsRef = useRef<ViewToken[]>([]);
-
-  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    viewableItemsRef.current = viewableItems;
-  }, []);
 
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<Story>) => (
@@ -132,8 +122,6 @@ export default function StoryCarousel({ stories }: StoryCarouselProps) {
         windowSize={5}
         maxToRenderPerBatch={3}
         removeClippedSubviews
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
         contentContainerStyle={[
           styles.contentContainer,
           isLandscape && styles.contentContainerLandscape,
